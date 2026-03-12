@@ -35,7 +35,7 @@ class Mem0SelfHostedApi {
         this.test = {
             request: {
                 baseURL: '={{$credentials.baseUrl}}',
-                url: '/v1/entities/',
+                url: '/config',
                 method: 'GET',
             },
         };
