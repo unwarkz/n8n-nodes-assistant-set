@@ -10,7 +10,7 @@ class Mem0Memory {
             icon: 'file:mem0.svg',
             group: ['transform'],
             version: 1,
-            description: 'Expor memórias do Mem0 para a porta de memória do AI Agent',
+            description: 'Expose Mem0 memories to the AI Agent memory port',
             defaults: {
                 name: 'Mem0 Memory',
             },
@@ -46,32 +46,32 @@ class Mem0Memory {
             },
             properties: [
                 {
-                    displayName: 'Autenticação',
+                    displayName: 'Authentication',
                     name: 'authType',
                     type: 'options',
                     options: [
-                        { name: 'Nuvem (mem0.ai)', value: 'cloud' },
+                        { name: 'Cloud (mem0.ai)', value: 'cloud' },
                         { name: 'Self-hosted', value: 'selfHosted' },
                     ],
                     default: 'cloud',
                 },
                 {
-                    displayName: 'ID da Thread',
+                    displayName: 'Thread ID',
                     name: 'threadId',
                     type: 'string',
                     default: '={{ $json.threadId || $executionId }}',
-                    description: 'Identificador único desta conversa/thread. Usado como user_id se nenhum ID explícito for informado.',
+                    description: 'Unique identifier for this conversation/thread. Used as user_id if no explicit ID is provided.',
                 },
                 {
-                    displayName: 'Modo de Recuperação de Contexto',
+                    displayName: 'Context Retrieval Mode',
                     name: 'retrievalMode',
                     type: 'options',
                     options: [
-                        { name: 'Básico', value: 'basic', description: 'Retorna memórias brutas (recentes ou todas)' },
+                        { name: 'Basic', value: 'basic', description: 'Returns raw memories (recent or all)' },
                         { name: 'Resumo', value: 'summary', description: 'Retorna um resumo simples em texto' },
-                        { name: 'Semântico (v1)', value: 'semantic', description: 'Busca semântica usando o endpoint v1 com opção de rerank' },
-                        { name: 'Semântico (v2)', value: 'semanticV2', description: 'Busca semântica avançada com filtros (v2)' },
-                        { name: 'Híbrido', value: 'hybrid', description: 'Combina memórias recentes com busca semântica (v2) usando time-decay e pontuação híbrida' },
+                        { name: 'Semantic (v1)', value: 'semantic', description: 'Semantic search using the v1 endpoint with rerank option' },
+                        { name: 'Semantic (v2)', value: 'semanticV2', description: 'Advanced semantic search with filters (v2)' },
+                        { name: 'Hybrid', value: 'hybrid', description: 'Combines recent memories with semantic search (v2) using time-decay and hybrid scoring' },
                     ],
                     default: 'basic',
                 },
@@ -80,7 +80,7 @@ class Mem0Memory {
                     name: 'query',
                     type: 'string',
                     default: '={{ $json.query || $json.lastUserMessage || "" }}',
-                    description: 'Consulta em linguagem natural para recuperar memórias relevantes',
+                    description: 'Natural language query to retrieve relevant memories',
                     displayOptions: {
                         show: {
                             retrievalMode: ['semantic', 'semanticV2', 'hybrid'],
@@ -88,33 +88,33 @@ class Mem0Memory {
                     },
                 },
                 {
-                    displayName: 'Chave de Memória',
+                    displayName: 'Memory Key',
                     name: 'memoryKey',
                     type: 'string',
                     default: 'chat_history',
-                    description: 'Chave sob a qual a memória será retornada',
+                    description: 'Key under which the memory will be returned',
                 },
                 {
                     displayName: 'Avançado',
                     name: 'advanced',
                     type: 'collection',
-                    placeholder: 'Opções',
+                    placeholder: 'Options',
                     default: {},
                     options: [
                         { displayName: 'User ID', name: 'userId', type: 'string', default: '' },
                         { displayName: 'Agent ID', name: 'agentId', type: 'string', default: '' },
                         { displayName: 'App ID', name: 'appId', type: 'string', default: '' },
                         { displayName: 'Run ID', name: 'runId', type: 'string', default: '' },
-                        { displayName: 'Top K', name: 'topK', type: 'number', typeOptions: { minValue: 1 }, default: 25, description: 'Quantidade de memórias a recuperar (modos semânticos e limites de recentes)' },
-                        { displayName: 'Rerank', name: 'rerank', type: 'boolean', default: true, description: 'Reordenação por relevância (modos semânticos)', displayOptions: { show: { '/retrievalMode': ['semantic', 'semanticV2', 'hybrid'] } } },
-                        { displayName: 'Fields (lista separada por vírgula)', name: 'fields', type: 'string', default: '', description: 'Campos específicos a retornar da API (modos semânticos)', displayOptions: { show: { '/retrievalMode': ['semantic', 'semanticV2', 'hybrid'] } } },
-                        { displayName: 'Filters (JSON)', name: 'filters', type: 'json', default: '{}', description: 'Objeto de filtros avançados para busca v2', displayOptions: { show: { '/retrievalMode': ['semanticV2', 'hybrid'] } } },
-                        { displayName: 'Last N (recentes)', name: 'lastN', type: 'number', default: 20, description: 'Se > 0, retorna apenas as últimas N memórias em Básico/Resumo e compõe a parte de recentes no Híbrido', displayOptions: { show: { '/retrievalMode': ['basic', 'summary', 'hybrid'] } } },
-                        { displayName: 'Alpha (peso semântico)', name: 'alpha', type: 'number', typeOptions: { minValue: 0, maxValue: 1, numberPrecision: 2 }, default: 0.65, description: 'Peso da relevância semântica na pontuação híbrida', displayOptions: { show: { '/retrievalMode': ['hybrid'] } } },
-                        { displayName: 'Half-life (horas)', name: 'halfLifeHours', type: 'number', typeOptions: { minValue: 1 }, default: 48, description: 'Meia-vida (em horas) usada no decaimento temporal', displayOptions: { show: { '/retrievalMode': ['hybrid'] } } },
-                        { displayName: 'Máximo a retornar', name: 'maxReturn', type: 'number', typeOptions: { minValue: 1 }, default: 30, description: 'Quantidade final de memórias retornadas ao agente', displayOptions: { show: { '/retrievalMode': ['hybrid'] } } },
-                        { displayName: 'MMR (diversidade)', name: 'mmr', type: 'boolean', default: true, description: 'Aplicar diversidade de resultados (Maximal Marginal Relevance)', displayOptions: { show: { '/retrievalMode': ['hybrid'] } } },
-                        { displayName: 'MMR Lambda', name: 'mmrLambda', type: 'number', typeOptions: { minValue: 0, maxValue: 1, numberPrecision: 2 }, default: 0.5, description: 'Equilíbrio entre relevância e diversidade no MMR', displayOptions: { show: { '/retrievalMode': ['hybrid'] } } },
+                        { displayName: 'Top K', name: 'topK', type: 'number', typeOptions: { minValue: 1 }, default: 25, description: 'Number of memories to retrieve (semantic modes and recent limits)' },
+                        { displayName: 'Rerank', name: 'rerank', type: 'boolean', default: true, description: 'Reranking by relevance (semantic modes)', displayOptions: { show: { '/retrievalMode': ['semantic', 'semanticV2', 'hybrid'] } } },
+                        { displayName: 'Fields (comma-separated list)', name: 'fields', type: 'string', default: '', description: 'Specific fields to return from the API (semantic modes)', displayOptions: { show: { '/retrievalMode': ['semantic', 'semanticV2', 'hybrid'] } } },
+                        { displayName: 'Filters (JSON)', name: 'filters', type: 'json', default: '{}', description: 'Advanced filters object for v2 search', displayOptions: { show: { '/retrievalMode': ['semanticV2', 'hybrid'] } } },
+                        { displayName: 'Last N (recent)', name: 'lastN', type: 'number', default: 20, description: 'If > 0, returns only the last N memories in Basic/Summary mode and composes the recent part in Hybrid', displayOptions: { show: { '/retrievalMode': ['basic', 'summary', 'hybrid'] } } },
+                        { displayName: 'Alpha (semantic weight)', name: 'alpha', type: 'number', typeOptions: { minValue: 0, maxValue: 1, numberPrecision: 2 }, default: 0.65, description: 'Weight of semantic relevance in hybrid scoring', displayOptions: { show: { '/retrievalMode': ['hybrid'] } } },
+                        { displayName: 'Half-life (hours)', name: 'halfLifeHours', type: 'number', typeOptions: { minValue: 1 }, default: 48, description: 'Half-life (in hours) used in time decay', displayOptions: { show: { '/retrievalMode': ['hybrid'] } } },
+                        { displayName: 'Maximum to Return', name: 'maxReturn', type: 'number', typeOptions: { minValue: 1 }, default: 30, description: 'Final number of memories returned to the agent', displayOptions: { show: { '/retrievalMode': ['hybrid'] } } },
+                        { displayName: 'MMR (diversity)', name: 'mmr', type: 'boolean', default: true, description: 'Apply result diversity (Maximal Marginal Relevance)', displayOptions: { show: { '/retrievalMode': ['hybrid'] } } },
+                        { displayName: 'MMR Lambda', name: 'mmrLambda', type: 'number', typeOptions: { minValue: 0, maxValue: 1, numberPrecision: 2 }, default: 0.5, description: 'Balance between relevance and diversity in MMR', displayOptions: { show: { '/retrievalMode': ['hybrid'] } } },
                     ],
                 },
             ],
@@ -178,7 +178,7 @@ class Mem0Memory {
                 const lastN = Number((_a = adv.lastN) !== null && _a !== void 0 ? _a : 20);
                 if (lastN > 0)
                     recents = recents.slice(-lastN);
-                // scoring híbrido
+                // hybrid scoring
                 const alpha = Number((_b = adv.alpha) !== null && _b !== void 0 ? _b : 0.65);
                 const halfLife = Number((_c = adv.halfLifeHours) !== null && _c !== void 0 ? _c : 48);
                 const maxReturn = Number((_d = adv.maxReturn) !== null && _d !== void 0 ? _d : 30);
@@ -237,7 +237,7 @@ class Mem0Memory {
                         for (let i = 0; i < rest.length; i++) {
                             const cand = rest[i];
                             const rel = cand.hybrid;
-                            // diversidade simples: penaliza se muito parecido com já escolhidos (aproximação via diferença de score)
+                            // simple diversity: penalize if too similar to already chosen (approximation via score difference)
                             const sim = Math.max(...selected.map((s) => 1 - Math.abs(s.hybrid - cand.hybrid)));
                             const mmrScore = mmrLambda * rel - (1 - mmrLambda) * sim;
                             if (mmrScore > bestScore) {
