@@ -21,7 +21,7 @@
     "format": "prettier nodes credentials --write",
     "lint": "tslint -p tsconfig.json -c tslint.json",
     "lintfix": "tslint --fix -p tsconfig.json -c tslint.json",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "echo 'Skipping build - dist files are pre-built'"
   },
   "files": [
     "dist"
