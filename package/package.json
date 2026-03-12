@@ -1,0 +1,67 @@
+{
+  "name": "@surreal7/n8n-nodes-mem0",
+  "version": "1.3.7",
+  "description": "N8N community node for Mem0 - intelligent memory layer for AI applications",
+  "license": "MIT",
+  "homepage": "https://github.com/marcusvini/n8n-nodes-mem0#readme",
+  "author": {
+    "name": "Marcus Vini",
+    "email": "marcusvini@example.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/marcusvini/n8n-nodes-mem0.git"
+  },
+  "bugs": {
+    "url": "https://github.com/marcusvini/n8n-nodes-mem0/issues"
+  },
+  "main": "index.js",
+  "scripts": {
+    "build": "tsc && gulp build:icons",
+    "dev": "tsc --watch",
+    "format": "prettier nodes credentials --write",
+    "lint": "tslint -p tsconfig.json -c tslint.json",
+    "lintfix": "tslint --fix -p tsconfig.json -c tslint.json",
+    "prepublishOnly": "npm run build"
+  },
+  "files": [
+    "dist"
+  ],
+  "n8n": {
+    "n8nNodesApiVersion": 1,
+    "credentials": [
+      "dist/credentials/Mem0Api.credentials.js",
+      "dist/credentials/Mem0SelfHostedApi.credentials.js"
+    ],
+    "nodes": [
+      "dist/nodes/Mem0/Mem0.node.js",
+      "dist/nodes/Mem0/Mem0Memory.node.js"
+    ]
+  },
+  "keywords": [
+    "n8n-community-node-package",
+    "n8n",
+    "mem0",
+    "memory",
+    "ai",
+    "llm",
+    "long-term-memory",
+    "semantic-search",
+    "vector-database"
+  ],
+  "devDependencies": {
+    "@types/node": "^18.16.0",
+    "gulp": "^4.0.2",
+    "n8n-workflow": "^1.0.0",
+    "prettier": "^2.8.8",
+    "tslint": "^6.1.3",
+    "typescript": "^5.1.6"
+  },
+  "peerDependencies": {
+    "n8n-workflow": ">=1.0.0"
+  }
+}
+
+
+
+
