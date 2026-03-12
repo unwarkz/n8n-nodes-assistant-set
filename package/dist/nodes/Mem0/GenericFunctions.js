@@ -3,22 +3,17 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.mem0ApiRequest = mem0ApiRequest;
 const n8n_workflow_1 = require("n8n-workflow");
 async function mem0ApiRequest(method, endpoint, body = {}, qs = {}) {
-    // Support both Portuguese parameter name used in CRUD node and English used in Memory node
+    // Resolve authentication type using the unified 'authType' parameter name
     let authenticationType;
     try {
-        authenticationType = this.getNodeParameter('tipoAutenticacao', 0);
+        authenticationType = this.getNodeParameter('authType', 0);
     }
     catch (e) {
-        authenticationType = this.getNodeParameter('authType', 0) || 'nuvem';
-        // Map to legacy values used below
-        if (authenticationType === 'cloud')
-            authenticationType = 'nuvem';
-        if (authenticationType === 'selfHosted')
-            authenticationType = 'selfHosted';
+        authenticationType = 'cloud';
     }
     let credentials;
     let baseUrl;
-    if (authenticationType === 'nuvem') {
+    if (authenticationType === 'cloud') {
         credentials = await this.getCredentials('mem0Api');
         baseUrl = 'https://api.mem0.ai';
     }

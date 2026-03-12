@@ -12,10 +12,10 @@ const buildKeyValueFromCollection = (collection) => {
         return undefined;
     const metadata = {};
     for (const entry of entries) {
-        const key = (_a = entry === null || entry === void 0 ? void 0 : entry.chave) === null || _a === void 0 ? void 0 : _a.trim();
+        const key = (_a = entry === null || entry === void 0 ? void 0 : entry.key) === null || _a === void 0 ? void 0 : _a.trim();
         if (!key)
             continue;
-        metadata[key] = (_b = entry === null || entry === void 0 ? void 0 : entry.valor) !== null && _b !== void 0 ? _b : '';
+        metadata[key] = (_b = entry === null || entry === void 0 ? void 0 : entry.value) !== null && _b !== void 0 ? _b : '';
     }
     return Object.keys(metadata).length ? metadata : undefined;
 };
@@ -28,7 +28,7 @@ class Mem0 {
             group: ['transform'],
             documentationUrl: 'https://docs.mem0.ai/',
             version: 1,
-            description: 'Interagir com a API Mem0 - camada inteligente de memoria para IA',
+            description: 'Interact with the Mem0 API - intelligent memory layer for AI',
             defaults: {
                 name: 'Mem0',
             },
@@ -40,7 +40,7 @@ class Mem0 {
                     required: true,
                     displayOptions: {
                         show: {
-                            tipoAutenticacao: ['nuvem'],
+                            authType: ['cloud'],
                         },
                     },
                 },
@@ -49,7 +49,7 @@ class Mem0 {
                     required: true,
                     displayOptions: {
                         show: {
-                            tipoAutenticacao: ['selfHosted'],
+                            authType: ['selfHosted'],
                         },
                     },
                 },
@@ -68,44 +68,44 @@ class Mem0 {
                     ],
                 },
             },
-            // Tentar diferentes abordagens para reconhecimento como node de memoria
+            // Try different approaches for memory node recognition
             __loadOptionsMethods: ['node'],
             properties: [
                 {
-                    displayName: 'Tipo de Autenticao',
-                    name: 'tipoAutenticacao',
+                    displayName: 'Authentication Type',
+                    name: 'authType',
                     type: 'options',
                     options: [
                         {
-                            name: 'Nuvem (Mem0.ai)',
-                            value: 'nuvem',
-                            description: 'Usar o servico Mem0 na nuvem em api.mem0.ai'
+                            name: 'Cloud (Mem0.ai)',
+                            value: 'cloud',
+                            description: 'Use the Mem0 cloud service at api.mem0.ai'
                         },
                         {
                             name: 'Self-Hosted',
                             value: 'selfHosted',
-                            description: 'Usar sua propria instancia Mem0'
+                            description: 'Use your own self-hosted Mem0 instance'
                         },
                     ],
-                    default: 'nuvem',
-                    description: 'Escolha entre Mem0 na nuvem ou instancia propria',
+                    default: 'cloud',
+                    description: 'Choose between Mem0 cloud or your own instance',
                 },
                 {
-                    displayName: 'Recurso',
+                    displayName: 'Resource',
                     name: 'resource',
                     type: 'options',
                     noDataExpression: true,
                     options: [
-                        { name: 'Memoria', value: 'memory' },
-                        { name: 'Entidade', value: 'entity' },
-                        { name: 'Organizacao', value: 'organization' },
-                        { name: 'Projeto', value: 'project' },
+                        { name: 'Memory', value: 'memory' },
+                        { name: 'Entity', value: 'entity' },
+                        { name: 'Organization', value: 'organization' },
+                        { name: 'Project', value: 'project' },
                     ],
                     default: 'memory',
-                    description: 'Escolha o tipo de recurso que deseja manipular',
+                    description: 'Choose the type of resource to manage',
                 },
                 {
-                    displayName: 'Operacao',
+                    displayName: 'Operation',
                     name: 'operation',
                     type: 'options',
                     noDataExpression: true,
@@ -115,20 +115,20 @@ class Mem0 {
                         },
                     },
                     options: [
-                        { name: 'Adicionar', value: 'add', description: 'Adicionar novas memorias', action: 'Adicionar uma memoria' },
-                        { name: 'Deletar', value: 'delete', description: 'Deletar uma memoria por ID', action: 'Deletar uma memoria' },
-                        { name: 'Deletar Todas', value: 'deleteAll', description: 'Deletar todas com filtros', action: 'Deletar todas as memorias' },
-                        { name: 'Buscar', value: 'get', description: 'Buscar uma memoria por ID', action: 'Buscar uma memoria' },
-                        { name: 'Listar Multiplas', value: 'getAll', description: 'Listar memorias', action: 'Listar multiplas memorias' },
-                        { name: 'Historico', value: 'history', description: 'Obter historico da memoria', action: 'Obter historico da memoria' },
-                        { name: 'Buscar Semantica', value: 'search', description: 'Busca semantica v1', action: 'Buscar memorias (basica)' },
-                        { name: 'Buscar Avancada', value: 'searchV2', description: 'Busca semantica avancada v2', action: 'Buscar memorias (avancada)' },
-                        { name: 'Atualizar', value: 'update', description: 'Atualizar memoria por ID', action: 'Atualizar uma memoria' },
+                        { name: 'Add', value: 'add', description: 'Add new memories', action: 'Add a memory' },
+                        { name: 'Delete', value: 'delete', description: 'Delete a memory by ID', action: 'Delete a memory' },
+                        { name: 'Delete All', value: 'deleteAll', description: 'Delete all with filters', action: 'Delete all memories' },
+                        { name: 'Get', value: 'get', description: 'Get a memory by ID', action: 'Get a memory' },
+                        { name: 'List Multiple', value: 'getAll', description: 'List memories', action: 'List multiple memories' },
+                        { name: 'History', value: 'history', description: 'Get memory history', action: 'Get memory history' },
+                        { name: 'Semantic Search', value: 'search', description: 'Semantic search v1', action: 'Search memories (basic)' },
+                        { name: 'Advanced Search', value: 'searchV2', description: 'Advanced semantic search v2', action: 'Search memories (advanced)' },
+                        { name: 'Update', value: 'update', description: 'Update memory by ID', action: 'Update a memory' },
                     ],
                     default: 'add',
                 },
                 {
-                    displayName: 'ID do Usuario',
+                    displayName: 'User ID',
                     name: 'userId',
                     type: 'string',
                     default: '',
@@ -138,11 +138,11 @@ class Mem0 {
                             operation: ['add', 'getAll', 'deleteAll', 'search', 'searchV2'],
                         },
                     },
-                    description: 'Identificador unico do Usuario para associar  memoria. Usado para filtrar e organizar memorias por Usuario.',
-                    placeholder: 'Usuario_123',
+                    description: 'Unique user identifier to associate with the memory. Used to filter and organize memories by user.',
+                    placeholder: 'user_123',
                 },
                 {
-                    displayName: 'ID do Agente',
+                    displayName: 'Agent ID',
                     name: 'agentId',
                     type: 'string',
                     default: '',
@@ -152,11 +152,11 @@ class Mem0 {
                             operation: ['add', 'getAll', 'deleteAll', 'search'],
                         },
                     },
-                    description: 'Identificador do agente/assistente de IA que est interagindo. til para separar memorias por diferentes agentes.',
-                    placeholder: 'agente_vendas',
+                    description: 'Identifier of the AI agent/assistant that is interacting. Useful for separating memories by different agents.',
+                    placeholder: 'sales_agent',
                 },
                 {
-                    displayName: 'ID da aplicacao',
+                    displayName: 'Application ID',
                     name: 'appId',
                     type: 'string',
                     default: '',
@@ -166,11 +166,11 @@ class Mem0 {
                             operation: ['add', 'getAll', 'deleteAll', 'search'],
                         },
                     },
-                    description: 'Identificador da aplicacao ou contexto do sistema. Use para segmentar memorias por diferentes apps.',
+                    description: 'Application or system context identifier. Use to segment memories by different apps.',
                     placeholder: 'app_crm',
                 },
                 {
-                    displayName: 'ID da sessao',
+                    displayName: 'Session ID',
                     name: 'runId',
                     type: 'string',
                     default: '',
@@ -180,90 +180,124 @@ class Mem0 {
                             operation: ['add', 'getAll', 'deleteAll', 'search'],
                         },
                     },
-                    description: 'Identificador da sessao/execuo atual. Agrupa memorias de uma mesma conversa ou interao.',
-                    placeholder: 'sessao_2024_001',
+                    description: 'Identifier of the current session/run. Groups memories from the same conversation or interaction.',
+                    placeholder: 'session_2024_001',
                 },
                 {
-                    displayName: 'Campos Adicionais',
+                    displayName: 'Message Content',
+                    name: 'messageContent',
+                    type: 'string',
+                    typeOptions: { rows: 4 },
+                    default: '',
+                    required: true,
+                    displayOptions: {
+                        show: {
+                            resource: ['memory'],
+                            operation: ['add'],
+                        },
+                    },
+                    description: 'The text or content of the message to be stored in memory',
+                    placeholder: 'Hello, my name is John...',
+                },
+                {
+                    displayName: 'Message Role',
+                    name: 'messageType',
+                    type: 'options',
+                    options: [
+                        { name: 'User', value: 'user', description: 'Message from the user' },
+                        { name: 'Assistant', value: 'assistant', description: 'Message from the AI assistant' },
+                        { name: 'System', value: 'system', description: 'System-level instruction' },
+                    ],
+                    default: 'user',
+                    displayOptions: {
+                        show: {
+                            resource: ['memory'],
+                            operation: ['add'],
+                        },
+                    },
+                    description: 'The role of the message sender in the conversation',
+                },
+                {
+                    displayName: 'Additional Fields',
                     name: 'additionalFields',
                     type: 'collection',
-                    placeholder: 'Adicionar Campo',
+                    placeholder: 'Add Field',
                     default: {},
                     displayOptions: { show: { resource: ['memory'], operation: ['add'] } },
                     options: [
                         {
-                            displayName: 'Categorias Personalizadas',
+                            displayName: 'Custom Categories',
                             name: 'customCategories',
                             type: 'fixedCollection',
                             default: {},
-                            description: 'Categorias customizadas para organizar a memoria',
+                            description: 'Custom categories to organize the memory',
                             options: [
                                 {
-                                    name: 'categorias',
-                                    displayName: 'Categorias',
+                                    name: 'items',
+                                    displayName: 'Categories',
                                     values: [
                                         {
-                                            displayName: 'Nome da Categoria',
-                                            name: 'nome',
+                                            displayName: 'Category Name',
+                                            name: 'name',
                                             type: 'string',
                                             default: '',
-                                            placeholder: 'tipo'
+                                            placeholder: 'type'
                                         },
                                         {
-                                            displayName: 'Valor da Categoria',
-                                            name: 'valor',
+                                            displayName: 'Category Value',
+                                            name: 'value',
                                             type: 'string',
                                             default: '',
-                                            placeholder: 'preferencia'
+                                            placeholder: 'preference'
                                         }
                                     ]
                                 }
                             ]
                         },
                         {
-                            displayName: 'Excluir Campos',
+                            displayName: 'Exclude Fields',
                             name: 'excludes',
                             type: 'string',
                             default: '',
-                            description: 'Lista de campos que NO devem ser memorizados. til para filtrar informaes sensveis.',
-                            placeholder: 'senha,cpf,email'
+                            description: 'List of fields that should NOT be memorized. Useful for filtering sensitive information.',
+                            placeholder: 'password,ssn,email'
                         },
                         {
-                            displayName: 'Incluir Apenas',
+                            displayName: 'Include Only',
                             name: 'includes',
                             type: 'string',
                             default: '',
-                            description: 'Lista de campos especficos que DEVEM ser memorizados. Quando definido, apenas estes campos sero processados.',
-                            placeholder: 'nome,preferencias,configuracoes'
+                            description: 'List of specific fields that MUST be memorized. When set, only these fields will be processed.',
+                            placeholder: 'name,preferences,settings'
                         },
                         {
-                            displayName: 'Inferncia Automtica',
+                            displayName: 'Automatic Inference',
                             name: 'infer',
                             type: 'boolean',
                             default: true,
-                            description: 'Ativar inferncia automtica de contexto e relacionamentos pelo Mem0. Recomendado: ativado.'
+                            description: 'Enable automatic inference of context and relationships by Mem0. Recommended: enabled.'
                         },
                         {
-                            displayName: 'Metadados',
+                            displayName: 'Metadata',
                             name: 'metadata',
                             type: 'fixedCollection',
                             default: {},
-                            description: 'Informaes adicionais sobre a memoria',
+                            description: 'Additional information about the memory',
                             options: [
                                 {
-                                    name: 'metadados',
-                                    displayName: 'Metadados',
+                                    name: 'entries',
+                                    displayName: 'Entries',
                                     values: [
                                         {
-                                            displayName: 'Chave',
-                                            name: 'chave',
+                                            displayName: 'Key',
+                                            name: 'key',
                                             type: 'string',
                                             default: '',
-                                            placeholder: 'fonte'
+                                            placeholder: 'source'
                                         },
                                         {
-                                            displayName: 'Valor',
-                                            name: 'valor',
+                                            displayName: 'Value',
+                                            name: 'value',
                                             type: 'string',
                                             default: '',
                                             placeholder: 'chat'
@@ -275,7 +309,7 @@ class Mem0 {
                     ],
                 },
                 {
-                    displayName: 'ID da memoria',
+                    displayName: 'Memory ID',
                     name: 'memoryId',
                     type: 'string',
                     default: '',
@@ -286,46 +320,46 @@ class Mem0 {
                             operation: ['get', 'delete', 'update', 'history'],
                         },
                     },
-                    description: 'Identificador unico da memoria especfica que voc deseja buscar, atualizar ou deletar.',
+                    description: 'Unique identifier of the specific memory you want to retrieve, update or delete.',
                     placeholder: 'mem_abc123xyz',
                 },
                 {
-                    displayName: 'Campos para Atualizar',
+                    displayName: 'Update Fields',
                     name: 'updateFields',
                     type: 'collection',
-                    placeholder: 'Adicionar Campo',
+                    placeholder: 'Add Field',
                     default: {},
                     displayOptions: { show: { resource: ['memory'], operation: ['update'] } },
                     options: [
                         {
-                            displayName: 'Novo Texto',
+                            displayName: 'New Text',
                             name: 'text',
                             type: 'string',
                             default: '',
-                            description: 'Novo contedo/texto da memoria',
-                            placeholder: 'Texto atualizado da memoria'
+                            description: 'New content/text for the memory',
+                            placeholder: 'Updated memory text'
                         },
                         {
-                            displayName: 'Metadados Atualizados',
+                            displayName: 'Updated Metadata',
                             name: 'metadata',
                             type: 'fixedCollection',
                             default: {},
-                            description: 'Novos metadados para substituir os existentes',
+                            description: 'New metadata to replace the existing ones',
                             options: [
                                 {
-                                    name: 'metadados',
-                                    displayName: 'Metadados',
+                                    name: 'entries',
+                                    displayName: 'Entries',
                                     values: [
                                         {
-                                            displayName: 'Chave',
-                                            name: 'chave',
+                                            displayName: 'Key',
+                                            name: 'key',
                                             type: 'string',
                                             default: '',
                                             placeholder: 'timestamp'
                                         },
                                         {
-                                            displayName: 'Valor',
-                                            name: 'valor',
+                                            displayName: 'Value',
+                                            name: 'value',
                                             type: 'string',
                                             default: '',
                                             placeholder: '2024-01-15'
@@ -337,7 +371,7 @@ class Mem0 {
                     ],
                 },
                 {
-                    displayName: 'Consulta de Busca',
+                    displayName: 'Search Query',
                     name: 'query',
                     type: 'string',
                     default: '',
@@ -345,72 +379,72 @@ class Mem0 {
                         show: { resource: ['memory'], operation: ['search', 'searchV2'] },
                     },
                     required: true,
-                    description: 'Texto para busca semntica nas memorias. O Mem0 encontrar memorias com significado similar, no apenas correspondncia exata.',
-                    placeholder: 'Quais so as preferncias de interface do Usuario?',
+                    description: 'Text for semantic search in memories. Mem0 will find memories with similar meaning, not just exact matches.',
+                    placeholder: 'What are the user interface preferences?',
                 },
                 {
-                    displayName: 'Opes de Busca',
+                    displayName: 'Search Options',
                     name: 'options',
                     type: 'collection',
-                    placeholder: 'Adicionar Opo',
+                    placeholder: 'Add Option',
                     default: {},
                     displayOptions: {
                         show: { resource: ['memory'], operation: ['search', 'searchV2'] },
                     },
                     options: [
                         {
-                            displayName: 'Quantidade de Resultados',
+                            displayName: 'Number of Results',
                             name: 'topK',
                             type: 'number',
                             default: 10,
-                            description: 'Nmero mximo de memorias a retornar nos resultados da busca (padro: 10)'
+                            description: 'Maximum number of memories to return in search results (default: 10)'
                         },
                         {
-                            displayName: 'Reordenar Resultados',
+                            displayName: 'Rerank Results',
                             name: 'rerank',
                             type: 'boolean',
                             default: false,
-                            description: 'Ativar reordenao inteligente dos resultados para melhorar relevncia'
+                            description: 'Enable intelligent reranking of results to improve relevance'
                         },
                         {
-                            displayName: 'Campos a Retornar',
+                            displayName: 'Fields to Return',
                             name: 'fields',
                             type: 'string',
                             default: '',
-                            description: 'Lista de campos especficos para incluir na resposta, separados por vrgula.',
+                            description: 'List of specific fields to include in the response, separated by comma.',
                             placeholder: 'id,memory,metadata,created_at'
                         },
                         {
-                            displayName: 'Filtrar por Metadados',
+                            displayName: 'Filter by Metadata',
                             name: 'metadata',
                             type: 'fixedCollection',
                             default: {},
-                            description: 'Filtro para buscar apenas memorias com metadados especficos',
+                            description: 'Filter to search only memories with specific metadata',
                             options: [
                                 {
-                                    name: 'filtros',
-                                    displayName: 'Filtros',
+                                    name: 'entries',
+                                    displayName: 'Filters',
                                     values: [
                                         {
-                                            displayName: 'Chave do Metadado',
-                                            name: 'chave',
+                                            displayName: 'Metadata Key',
+                                            name: 'key',
                                             type: 'string',
                                             default: '',
                                             placeholder: 'categoria',
                                         },
                                         {
-                                            displayName: 'Valor Esperado',
-                                            name: 'valor',
+                                            displayName: 'Expected Value',
+                                            name: 'value',
                                             type: 'string',
                                             default: '',
-                                            placeholder: 'preferencias',
+                                            placeholder: 'preferences',
                                         },
                                     ],
                                 },
                             ],
                         },
                         {
-                            displayName: 'Filtros Avanados',
+                            displayName: 'Advanced Filters',
                             name: 'filters',
                             type: 'fixedCollection',
                             default: {},
@@ -421,43 +455,43 @@ class Mem0 {
                             displayOptions: {
                                 show: { resource: ['memory'], operation: ['searchV2'] },
                             },
-                            description: 'Adicione regras de filtro sem precisar escrever cdigo. Cada regra  combinada com AND na busca V2.',
+                            description: 'Add filter rules without writing code. Each rule is combined with AND in the V2 search.',
                             options: [
                                 {
                                     name: 'rules',
-                                    displayName: 'Regras',
+                                    displayName: 'Rules',
                                     values: [
                                         {
-                                            displayName: 'Campo',
+                                            displayName: 'Field',
                                             name: 'field',
                                             type: 'string',
                                             default: '',
                                             required: true,
-                                            description: 'Nome do campo a ser filtrado. Ex.: memory, user_id, metadata.preferencias',
-                                            placeholder: 'metadata.categoria',
+                                            description: 'Name of the field to filter. E.g.: memory, user_id, metadata.preferences',
+                                            placeholder: 'metadata.category',
                                         },
                                         {
-                                            displayName: 'Operao',
+                                            displayName: 'Operation',
                                             name: 'operation',
                                             type: 'options',
                                             options: [
-                                                { name: 'Igual', value: 'equals', description: 'Campo deve ser igual ao valor informado' },
-                                                { name: 'Diferente', value: 'notEquals', description: 'Campo deve ser diferente do valor informado' },
-                                                { name: 'Contm', value: 'contains', description: 'Campo contm (case-insensitive) o valor informado' },
-                                                { name: 'Maior que', value: 'greaterThan', description: 'Campo numrico/data maior que o valor' },
-                                                { name: 'Menor que', value: 'lessThan', description: 'Campo numrico/data menor que o valor' },
+                                                { name: 'Equals', value: 'equals', description: 'Field must equal the provided value' },
+                                                { name: 'Not Equals', value: 'notEquals', description: 'Field must differ from the provided value' },
+                                                { name: 'Contains', value: 'contains', description: 'Field contains (case-insensitive) the provided value' },
+                                                { name: 'Greater Than', value: 'greaterThan', description: 'Numeric/date field greater than the value' },
+                                                { name: 'Less Than', value: 'lessThan', description: 'Numeric/date field less than the value' },
                                             ],
                                             default: 'equals',
                                             required: true,
                                         },
                                         {
-                                            displayName: 'Valor',
+                                            displayName: 'Value',
                                             name: 'value',
                                             type: 'string',
                                             default: '',
                                             required: true,
-                                            description: 'Valor que ser comparado com o campo selecionado',
-                                            placeholder: 'preferencias',
+                                            description: 'Value to be compared with the selected field',
+                                            placeholder: 'preferences',
                                         },
                                     ],
                                 },
@@ -467,7 +501,7 @@ class Mem0 {
                 },
                 // Operacoes para entidades
                 {
-                    displayName: 'Operacao',
+                    displayName: 'Operation',
                     name: 'operation',
                     type: 'options',
                     noDataExpression: true,
@@ -475,33 +509,33 @@ class Mem0 {
                         show: { resource: ['entity'] },
                     },
                     options: [
-                        { name: 'Criar', value: 'create', description: 'Criar nova entidade', action: 'Criar uma entidade' },
-                        { name: 'Deletar', value: 'delete', description: 'Deletar uma entidade', action: 'Deletar uma entidade' },
-                        { name: 'Detalhar', value: 'get', description: 'Buscar entidade por ID', action: 'Buscar uma entidade' },
-                        { name: 'Listar Multiplas', value: 'getAll', description: 'Listar entidades', action: 'Listar multiplas entidades' },
-                        { name: 'Atualizar', value: 'update', description: 'Atualizar uma entidade', action: 'Atualizar uma entidade' },
+                        { name: 'Create', value: 'create', description: 'Create a new entity', action: 'Create an entity' },
+                        { name: 'Delete', value: 'delete', description: 'Delete an entity', action: 'Delete an entity' },
+                        { name: 'Get', value: 'get', description: 'Get entity by ID', action: 'Get an entity' },
+                        { name: 'List Multiple', value: 'getAll', description: 'List entities', action: 'List multiple entities' },
+                        { name: 'Update', value: 'update', description: 'Update an entity', action: 'Update an entity' },
                     ],
                     default: 'getAll',
                 },
                 {
-                    displayName: 'Tipo de Entidade',
+                    displayName: 'Entity Type',
                     name: 'entityType',
                     type: 'options',
                     options: [
-                        { name: 'Usuario', value: 'user' },
-                        { name: 'Agente', value: 'agent' },
-                        { name: 'Aplicacao', value: 'app' },
-                        { name: 'Sessao', value: 'run' },
+                        { name: 'User', value: 'user' },
+                        { name: 'Agent', value: 'agent' },
+                        { name: 'Application', value: 'app' },
+                        { name: 'Session', value: 'run' },
                     ],
                     default: 'user',
                     displayOptions: {
                         show: { resource: ['entity'], operation: ['create', 'delete', 'get', 'update'] },
                     },
                     required: true,
-                    description: 'Tipo de entidade para a operacao selecionada',
+                    description: 'Entity type for the selected operation',
                 },
                 {
-                    displayName: 'ID da Entidade',
+                    displayName: 'Entity ID',
                     name: 'entityId',
                     type: 'string',
                     default: '',
@@ -509,11 +543,11 @@ class Mem0 {
                         show: { resource: ['entity'], operation: ['delete', 'get', 'update'] },
                     },
                     required: true,
-                    description: 'Identificador uunico da entidade',
-                    placeholder: 'entidade_xyz123',
+                    description: 'Unique identifier of the entity',
+                    placeholder: 'entity_xyz123',
                 },
                 {
-                    displayName: 'Nome da Entidade',
+                    displayName: 'Entity Name',
                     name: 'entityName',
                     type: 'string',
                     default: '',
@@ -521,32 +555,32 @@ class Mem0 {
                         show: { resource: ['entity'], operation: ['create'] },
                     },
                     required: true,
-                    description: 'Nome amigavel da nova entidade',
+                    description: 'Friendly name for the new entity',
                 },
                 {
-                    displayName: 'Campos Adicionais',
+                    displayName: 'Additional Fields',
                     name: 'entityAdditionalFields',
                     type: 'collection',
                     default: {},
                     displayOptions: {
                         show: { resource: ['entity'], operation: ['create'] },
                     },
-                    description: 'Defina organizacao, projeto ou metadados da entidade',
+                    description: 'Define organization, project or metadata for the entity',
                     options: [
                         { displayName: 'Organization ID', name: 'organizationId', type: 'string', default: '' },
                         { displayName: 'Project ID', name: 'projectId', type: 'string', default: '' },
                         {
-                            displayName: 'Metadados',
+                            displayName: 'Metadata',
                             name: 'metadata',
                             type: 'fixedCollection',
                             default: {},
                             options: [
                                 {
-                                    name: 'metadados',
-                                    displayName: 'Metadados',
+                                    name: 'entries',
+                                    displayName: 'Entries',
                                     values: [
-                                        { displayName: 'Chave', name: 'chave', type: 'string', default: '' },
-                                        { displayName: 'Valor', name: 'valor', type: 'string', default: '' },
+                                        { displayName: 'Key', name: 'key', type: 'string', default: '' },
+                                        { displayName: 'Value', name: 'value', type: 'string', default: '' },
                                     ],
                                 },
                             ],
@@ -554,30 +588,30 @@ class Mem0 {
                     ],
                 },
                 {
-                    displayName: 'Campos para Atualizacao',
+                    displayName: 'Update Fields',
                     name: 'entityUpdateFields',
                     type: 'collection',
                     default: {},
                     displayOptions: {
                         show: { resource: ['entity'], operation: ['update'] },
                     },
-                    description: 'Selecione os campos que deseja atualizar',
+                    description: 'Select the fields you want to update',
                     options: [
-                        { displayName: 'Novo Nome', name: 'name', type: 'string', default: '' },
+                        { displayName: 'New Name', name: 'name', type: 'string', default: '' },
                         { displayName: 'Organization ID', name: 'organizationId', type: 'string', default: '' },
                         { displayName: 'Project ID', name: 'projectId', type: 'string', default: '' },
                         {
-                            displayName: 'Metadados',
+                            displayName: 'Metadata',
                             name: 'metadata',
                             type: 'fixedCollection',
                             default: {},
                             options: [
                                 {
-                                    name: 'metadados',
-                                    displayName: 'Metadados',
+                                    name: 'entries',
+                                    displayName: 'Entries',
                                     values: [
-                                        { displayName: 'Chave', name: 'chave', type: 'string', default: '' },
-                                        { displayName: 'Valor', name: 'valor', type: 'string', default: '' },
+                                        { displayName: 'Key', name: 'key', type: 'string', default: '' },
+                                        { displayName: 'Value', name: 'value', type: 'string', default: '' },
                                     ],
                                 },
                             ],
@@ -585,24 +619,24 @@ class Mem0 {
                     ],
                 },
                 {
-                    displayName: 'Filtros de Entidade',
+                    displayName: 'Entity Filters',
                     name: 'entityFilters',
                     type: 'collection',
                     default: {},
                     displayOptions: {
                         show: { resource: ['entity'], operation: ['getAll'] },
                     },
-                    description: 'Filtros opcionais para listar entidades',
+                    description: 'Optional filters to list entities',
                     options: [
                         {
-                            displayName: 'Tipo',
+                            displayName: 'Type',
                             name: 'type',
                             type: 'options',
                             options: [
-                                { name: 'Usuario', value: 'user' },
-                                { name: 'Agente', value: 'agent' },
-                                { name: 'Aplicacao', value: 'app' },
-                                { name: 'Sessao', value: 'run' },
+                                { name: 'User', value: 'user' },
+                                { name: 'Agent', value: 'agent' },
+                                { name: 'Application', value: 'app' },
+                                { name: 'Session', value: 'run' },
                             ],
                             default: 'user',
                         },
@@ -612,7 +646,7 @@ class Mem0 {
                 },
                 // Operacoes para organizacoes
                 {
-                    displayName: 'Operacao',
+                    displayName: 'Operation',
                     name: 'operation',
                     type: 'options',
                     noDataExpression: true,
@@ -620,11 +654,11 @@ class Mem0 {
                         show: { resource: ['organization'] },
                     },
                     options: [
-                        { name: 'Criar', value: 'create', description: 'Criar organizacao', action: 'Criar organizacao' },
-                        { name: 'Deletar', value: 'delete', description: 'Deletar organizacao', action: 'Deletar organizacao' },
-                        { name: 'Detalhar', value: 'get', description: 'Buscar organizacao por ID', action: 'Buscar organizacao' },
-                        { name: 'Listar Multiplas', value: 'getAll', description: 'Listar organizacoes', action: 'Listar organizacoes' },
-                        { name: 'Atualizar', value: 'update', description: 'Atualizar organizacao', action: 'Atualizar organizacao' },
+                        { name: 'Create', value: 'create', description: 'Create organization', action: 'Create organization' },
+                        { name: 'Delete', value: 'delete', description: 'Delete organization', action: 'Delete organization' },
+                        { name: 'Get', value: 'get', description: 'Get organization by ID', action: 'Get organization' },
+                        { name: 'List Multiple', value: 'getAll', description: 'List organizations', action: 'List organizations' },
+                        { name: 'Update', value: 'update', description: 'Update organization', action: 'Update organization' },
                     ],
                     default: 'getAll',
                 },
@@ -637,10 +671,10 @@ class Mem0 {
                         show: { resource: ['organization'], operation: ['get', 'update', 'delete'] },
                     },
                     required: true,
-                    description: 'Identificador uunico da organizacao',
+                    description: 'Unique identifier of the organization',
                 },
                 {
-                    displayName: 'Nome da Organizacao',
+                    displayName: 'Organization Name',
                     name: 'organizationName',
                     type: 'string',
                     default: '',
@@ -648,10 +682,10 @@ class Mem0 {
                         show: { resource: ['organization'], operation: ['create'] },
                     },
                     required: true,
-                    description: 'Nome exibido da organizacao',
+                    description: 'Display name of the organization',
                 },
                 {
-                    displayName: 'Campos Adicionais (Organizacao)',
+                    displayName: 'Additional Fields (Organization)',
                     name: 'organizationAdditionalFields',
                     type: 'collection',
                     default: {},
@@ -660,19 +694,19 @@ class Mem0 {
                     },
                     options: [
                         { displayName: 'Slug', name: 'slug', type: 'string', default: '' },
-                        { displayName: 'Descricao', name: 'description', type: 'string', typeOptions: { rows: 3 }, default: '' },
+                        { displayName: 'Description', name: 'description', type: 'string', typeOptions: { rows: 3 }, default: '' },
                         {
-                            displayName: 'Metadados',
+                            displayName: 'Metadata',
                             name: 'metadata',
                             type: 'fixedCollection',
                             default: {},
                             options: [
                                 {
-                                    name: 'metadados',
-                                    displayName: 'Metadados',
+                                    name: 'entries',
+                                    displayName: 'Entries',
                                     values: [
-                                        { displayName: 'Chave', name: 'chave', type: 'string', default: '' },
-                                        { displayName: 'Valor', name: 'valor', type: 'string', default: '' },
+                                        { displayName: 'Key', name: 'key', type: 'string', default: '' },
+                                        { displayName: 'Value', name: 'value', type: 'string', default: '' },
                                     ],
                                 },
                             ],
@@ -680,7 +714,7 @@ class Mem0 {
                     ],
                 },
                 {
-                    displayName: 'Campos para Atualizacao (Organizacao)',
+                    displayName: 'Update Fields (Organization)',
                     name: 'organizationUpdateFields',
                     type: 'collection',
                     default: {},
@@ -688,21 +722,21 @@ class Mem0 {
                         show: { resource: ['organization'], operation: ['update'] },
                     },
                     options: [
-                        { displayName: 'Novo Nome', name: 'name', type: 'string', default: '' },
+                        { displayName: 'New Name', name: 'name', type: 'string', default: '' },
                         { displayName: 'Slug', name: 'slug', type: 'string', default: '' },
-                        { displayName: 'Descricao', name: 'description', type: 'string', typeOptions: { rows: 3 }, default: '' },
+                        { displayName: 'Description', name: 'description', type: 'string', typeOptions: { rows: 3 }, default: '' },
                         {
-                            displayName: 'Metadados',
+                            displayName: 'Metadata',
                             name: 'metadata',
                             type: 'fixedCollection',
                             default: {},
                             options: [
                                 {
-                                    name: 'metadados',
-                                    displayName: 'Metadados',
+                                    name: 'entries',
+                                    displayName: 'Entries',
                                     values: [
-                                        { displayName: 'Chave', name: 'chave', type: 'string', default: '' },
-                                        { displayName: 'Valor', name: 'valor', type: 'string', default: '' },
+                                        { displayName: 'Key', name: 'key', type: 'string', default: '' },
+                                        { displayName: 'Value', name: 'value', type: 'string', default: '' },
                                     ],
                                 },
                             ],
@@ -711,7 +745,7 @@ class Mem0 {
                 },
                 // Operacoes para projetos
                 {
-                    displayName: 'Operacao',
+                    displayName: 'Operation',
                     name: 'operation',
                     type: 'options',
                     noDataExpression: true,
@@ -719,11 +753,11 @@ class Mem0 {
                         show: { resource: ['project'] },
                     },
                     options: [
-                        { name: 'Criar', value: 'create', description: 'Criar projeto', action: 'Criar projeto' },
-                        { name: 'Deletar', value: 'delete', description: 'Deletar projeto', action: 'Deletar projeto' },
-                        { name: 'Detalhar', value: 'get', description: 'Buscar projeto por ID', action: 'Buscar projeto' },
-                        { name: 'Listar Multiplos', value: 'getAll', description: 'Listar projetos', action: 'Listar projetos' },
-                        { name: 'Atualizar', value: 'update', description: 'Atualizar projeto', action: 'Atualizar projeto' },
+                        { name: 'Create', value: 'create', description: 'Create project', action: 'Create project' },
+                        { name: 'Delete', value: 'delete', description: 'Delete project', action: 'Delete project' },
+                        { name: 'Get', value: 'get', description: 'Get project by ID', action: 'Get project' },
+                        { name: 'List Multiple', value: 'getAll', description: 'List projects', action: 'List projects' },
+                        { name: 'Update', value: 'update', description: 'Update project', action: 'Update project' },
                     ],
                     default: 'getAll',
                 },
@@ -736,7 +770,7 @@ class Mem0 {
                         show: { resource: ['project'], operation: ['get', 'update', 'delete'] },
                     },
                     required: true,
-                    description: 'Identificador uunico do projeto',
+                    description: 'Unique identifier of the project',
                 },
                 {
                     displayName: 'Organization ID',
@@ -747,10 +781,10 @@ class Mem0 {
                         show: { resource: ['project'], operation: ['create'] },
                     },
                     required: true,
-                    description: 'Organizacao proprietaria do projeto',
+                    description: 'Organization that owns the project',
                 },
                 {
-                    displayName: 'Nome do Projeto',
+                    displayName: 'Project Name',
                     name: 'projectName',
                     type: 'string',
                     default: '',
@@ -758,10 +792,10 @@ class Mem0 {
                         show: { resource: ['project'], operation: ['create'] },
                     },
                     required: true,
-                    description: 'Nome exibido do projeto',
+                    description: 'Display name of the project',
                 },
                 {
-                    displayName: 'Campos Adicionais (Projeto)',
+                    displayName: 'Additional Fields (Project)',
                     name: 'projectAdditionalFields',
                     type: 'collection',
                     default: {},
@@ -769,19 +803,19 @@ class Mem0 {
                         show: { resource: ['project'], operation: ['create'] },
                     },
                     options: [
-                        { displayName: 'Descricao', name: 'description', type: 'string', typeOptions: { rows: 3 }, default: '' },
+                        { displayName: 'Description', name: 'description', type: 'string', typeOptions: { rows: 3 }, default: '' },
                         {
-                            displayName: 'Metadados',
+                            displayName: 'Metadata',
                             name: 'metadata',
                             type: 'fixedCollection',
                             default: {},
                             options: [
                                 {
-                                    name: 'metadados',
-                                    displayName: 'Metadados',
+                                    name: 'entries',
+                                    displayName: 'Entries',
                                     values: [
-                                        { displayName: 'Chave', name: 'chave', type: 'string', default: '' },
-                                        { displayName: 'Valor', name: 'valor', type: 'string', default: '' },
+                                        { displayName: 'Key', name: 'key', type: 'string', default: '' },
+                                        { displayName: 'Value', name: 'value', type: 'string', default: '' },
                                     ],
                                 },
                             ],
@@ -789,7 +823,7 @@ class Mem0 {
                     ],
                 },
                 {
-                    displayName: 'Campos para Atualizacao (Projeto)',
+                    displayName: 'Update Fields (Project)',
                     name: 'projectUpdateFields',
                     type: 'collection',
                     default: {},
@@ -797,21 +831,21 @@ class Mem0 {
                         show: { resource: ['project'], operation: ['update'] },
                     },
                     options: [
-                        { displayName: 'Novo Nome', name: 'name', type: 'string', default: '' },
-                        { displayName: 'Descricao', name: 'description', type: 'string', typeOptions: { rows: 3 }, default: '' },
+                        { displayName: 'New Name', name: 'name', type: 'string', default: '' },
+                        { displayName: 'Description', name: 'description', type: 'string', typeOptions: { rows: 3 }, default: '' },
                         { displayName: 'Organization ID', name: 'organizationId', type: 'string', default: '' },
                         {
-                            displayName: 'Metadados',
+                            displayName: 'Metadata',
                             name: 'metadata',
                             type: 'fixedCollection',
                             default: {},
                             options: [
                                 {
-                                    name: 'metadados',
-                                    displayName: 'Metadados',
+                                    name: 'entries',
+                                    displayName: 'Entries',
                                     values: [
-                                        { displayName: 'Chave', name: 'chave', type: 'string', default: '' },
-                                        { displayName: 'Valor', name: 'valor', type: 'string', default: '' },
+                                        { displayName: 'Key', name: 'key', type: 'string', default: '' },
+                                        { displayName: 'Value', name: 'value', type: 'string', default: '' },
                                     ],
                                 },
                             ],
@@ -819,14 +853,14 @@ class Mem0 {
                     ],
                 },
                 {
-                    displayName: 'Filtros de Projeto',
+                    displayName: 'Project Filters',
                     name: 'projectFilters',
                     type: 'collection',
                     default: {},
                     displayOptions: {
                         show: { resource: ['project'], operation: ['getAll'] },
                     },
-                    description: 'Filtros opcionais para listar projetos',
+                    description: 'Optional filters to list projects',
                     options: [
                         { displayName: 'Organization ID', name: 'organizationId', type: 'string', default: '' },
                     ],
@@ -844,10 +878,10 @@ class Mem0 {
             try {
                 if (resource === 'memory') {
                     if (operation === 'add') {
-                        // Simplificar o campo de mensagens
-                        const conteudoMensagem = this.getNodeParameter('conteudoMensagem', i);
-                        const tipoMensagem = this.getNodeParameter('tipoMensagem', i);
-                        const messages = [{ role: tipoMensagem, content: conteudoMensagem }];
+                        // Build messages array from fields
+                        const messageContent = this.getNodeParameter('messageContent', i);
+                        const messageType = this.getNodeParameter('messageType', i);
+                        const messages = [{ role: messageType, content: messageContent }];
                         const userId = this.getNodeParameter('userId', i, '');
                         const agentId = this.getNodeParameter('agentId', i, '');
                         const appId = this.getNodeParameter('appId', i, '');
@@ -862,11 +896,11 @@ class Mem0 {
                             body.app_id = appId;
                         if (runId)
                             body.run_id = runId;
-                        // Processar metadados simplificados
-                        if (additionalFields.metadata && typeof additionalFields.metadata === 'object' && 'metadados' in additionalFields.metadata) {
+                        // Process metadata
+                        if (additionalFields.metadata && typeof additionalFields.metadata === 'object' && 'entries' in additionalFields.metadata) {
                             const metadataObj = {};
-                            additionalFields.metadata.metadados.forEach((item) => {
-                                metadataObj[item.chave] = item.valor;
+                            additionalFields.metadata.entries.forEach((item) => {
+                                metadataObj[item.key] = item.value;
                             });
                             body.metadata = metadataObj;
                         }
@@ -876,11 +910,11 @@ class Mem0 {
                             body.excludes = additionalFields.excludes;
                         if (typeof additionalFields.infer === 'boolean')
                             body.infer = additionalFields.infer;
-                        // Processar categorias personalizadas simplificadas
-                        if (additionalFields.customCategories && typeof additionalFields.customCategories === 'object' && 'categorias' in additionalFields.customCategories) {
+                        // Process custom categories
+                        if (additionalFields.customCategories && typeof additionalFields.customCategories === 'object' && 'items' in additionalFields.customCategories) {
                             const categoriesObj = {};
-                            additionalFields.customCategories.categorias.forEach((item) => {
-                                categoriesObj[item.nome] = item.valor;
+                            additionalFields.customCategories.items.forEach((item) => {
+                                categoriesObj[item.name] = item.value;
                             });
                             body.custom_categories = categoriesObj;
                         }
@@ -940,11 +974,11 @@ class Mem0 {
                         const body = {};
                         if (updateFields.text)
                             body.text = updateFields.text;
-                        // Processar metadados de atualizao simplificados
-                        if (updateFields.metadata && typeof updateFields.metadata === 'object' && 'metadados' in updateFields.metadata) {
+                        // Process update metadata
+                        if (updateFields.metadata && typeof updateFields.metadata === 'object' && 'entries' in updateFields.metadata) {
                             const metadataObj = {};
-                            updateFields.metadata.metadados.forEach((item) => {
-                                metadataObj[item.chave] = item.valor;
+                            updateFields.metadata.entries.forEach((item) => {
+                                metadataObj[item.key] = item.value;
                             });
                             body.metadata = metadataObj;
                         }
@@ -974,11 +1008,11 @@ class Mem0 {
                         if (typeof options.fields === 'string') {
                             body.fields = options.fields.split(',').map((f) => f.trim());
                         }
-                        // Processar metadados de filtro simplificados
-                        if (options.metadata && typeof options.metadata === 'object' && 'filtros' in options.metadata) {
+                        // Process filter metadata
+                        if (options.metadata && typeof options.metadata === 'object' && 'entries' in options.metadata) {
                             const metadataObj = {};
-                            options.metadata.filtros.forEach((item) => {
-                                metadataObj[item.chave] = item.valor;
+                            options.metadata.entries.forEach((item) => {
+                                metadataObj[item.key] = item.value;
                             });
                             body.metadata = metadataObj;
                         }
@@ -1175,7 +1209,7 @@ class Mem0 {
                         returnData.push({ json: response });
                     }
                     else {
-                        throw new n8n_workflow_1.NodeOperationError(this.getNode(), `Operacao nao suportada para organizacao: ${operation}`);
+                        throw new n8n_workflow_1.NodeOperationError(this.getNode(), `Unsupported operation for organization: ${operation}`);
                     }
                 }
                 else if (resource === 'project') {
@@ -1230,7 +1264,7 @@ class Mem0 {
                         returnData.push({ json: response });
                     }
                     else {
-                        throw new n8n_workflow_1.NodeOperationError(this.getNode(), `Operacao nao suportada para projeto: ${operation}`);
+                        throw new n8n_workflow_1.NodeOperationError(this.getNode(), `Unsupported operation for project: ${operation}`);
                     }
                 }
             }
