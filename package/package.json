@@ -34,7 +34,8 @@
     ],
     "nodes": [
       "dist/nodes/Mem0/Mem0.node.js",
-      "dist/nodes/Mem0/Mem0Memory.node.js"
+      "dist/nodes/Mem0/Mem0Memory.node.js",
+      "dist/nodes/Mem0/Mem0AiTools.node.js"
     ]
   },
   "keywords": [
@@ -51,7 +52,7 @@
   "devDependencies": {
     "@types/node": "^18.16.0",
     "gulp": "^4.0.2",
-    "n8n-workflow": "^1.0.0",
+    "n8n-workflow": "^1.120.9",
     "prettier": "^2.8.8",
     "tslint": "^6.1.3",
     "typescript": "^5.1.6"
