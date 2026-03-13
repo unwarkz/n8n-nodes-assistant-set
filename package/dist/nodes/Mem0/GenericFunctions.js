@@ -49,7 +49,9 @@ async function mem0ApiRequest(method, endpoint, body = {}, qs = {}) {
     };
     if (credentials.apiKey) {
         options.headers = {
-            'Authorization': `Token ${credentials.apiKey}`,
+            'Authorization': authenticationType === 'selfHosted'
+                ? `Bearer ${credentials.apiKey}`
+                : `Token ${credentials.apiKey}`,
         };
     }
     try {

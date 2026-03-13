@@ -95,11 +95,29 @@ class Mem0 {
                     name: 'resource',
                     type: 'options',
                     noDataExpression: true,
+                    displayOptions: {
+                        show: { authType: ['cloud'] },
+                    },
                     options: [
                         { name: 'Memory', value: 'memory' },
                         { name: 'Entity', value: 'entity' },
                         { name: 'Organization', value: 'organization' },
                         { name: 'Project', value: 'project' },
+                    ],
+                    default: 'memory',
+                    description: 'Choose the type of resource to manage',
+                },
+                {
+                    displayName: 'Resource',
+                    name: 'resource',
+                    type: 'options',
+                    noDataExpression: true,
+                    displayOptions: {
+                        show: { authType: ['selfHosted'] },
+                    },
+                    options: [
+                        { name: 'Memory', value: 'memory' },
+                        { name: 'Config / Maintenance', value: 'config' },
                     ],
                     default: 'memory',
                     description: 'Choose the type of resource to manage',
@@ -112,6 +130,7 @@ class Mem0 {
                     displayOptions: {
                         show: {
                             resource: ['memory'],
+                            authType: ['cloud'],
                         },
                     },
                     options: [
@@ -126,6 +145,46 @@ class Mem0 {
                         { name: 'Update', value: 'update', description: 'Update memory by ID', action: 'Update a memory' },
                     ],
                     default: 'add',
+                },
+                {
+                    displayName: 'Operation',
+                    name: 'operation',
+                    type: 'options',
+                    noDataExpression: true,
+                    displayOptions: {
+                        show: {
+                            resource: ['memory'],
+                            authType: ['selfHosted'],
+                        },
+                    },
+                    options: [
+                        { name: 'Add', value: 'add', description: 'Add new memories', action: 'Add a memory' },
+                        { name: 'Delete', value: 'delete', description: 'Delete a memory by ID', action: 'Delete a memory' },
+                        { name: 'Delete All', value: 'deleteAll', description: 'Delete all with filters', action: 'Delete all memories' },
+                        { name: 'Get', value: 'get', description: 'Get a memory by ID', action: 'Get a memory' },
+                        { name: 'List Multiple', value: 'getAll', description: 'List memories', action: 'List multiple memories' },
+                        { name: 'History', value: 'history', description: 'Get memory history', action: 'Get memory history' },
+                        { name: 'Semantic Search', value: 'search', description: 'Semantic search', action: 'Search memories' },
+                        { name: 'Update', value: 'update', description: 'Update memory by ID', action: 'Update a memory' },
+                    ],
+                    default: 'add',
+                },
+                {
+                    displayName: 'Operation',
+                    name: 'operation',
+                    type: 'options',
+                    noDataExpression: true,
+                    displayOptions: {
+                        show: { resource: ['config'] },
+                    },
+                    options: [
+                        { name: 'Health Check', value: 'health', description: 'Check service status and current LLM provider', action: 'Health check' },
+                        { name: 'Get Config', value: 'getConfig', description: 'Get current mem0 configuration', action: 'Get config' },
+                        { name: 'Switch Provider', value: 'switch', description: 'Switch LLM provider on-the-fly (gemini / openrouter / nvidia / qwen)', action: 'Switch provider' },
+                        { name: 'Set Full Config', value: 'configure', description: 'Replace the full mem0 config (advanced)', action: 'Set full config' },
+                        { name: 'Reset All Memories', value: 'reset', description: 'Delete all memories from the vector store', action: 'Reset all memories' },
+                    ],
+                    default: 'health',
                 },
                 {
                     displayName: 'User ID',
@@ -182,6 +241,52 @@ class Mem0 {
                     },
                     description: 'Identifier of the current session/run. Groups memories from the same conversation or interaction.',
                     placeholder: 'session_2024_001',
+                },
+                {
+                    displayName: 'Provider',
+                    name: 'configProvider',
+                    type: 'options',
+                    options: [
+                        { name: 'Gemini (Google AI Studio)', value: 'gemini' },
+                        { name: 'OpenRouter', value: 'openrouter' },
+                        { name: 'NVIDIA NIM', value: 'nvidia' },
+                        { name: 'Qwen (Alibaba)', value: 'qwen' },
+                    ],
+                    default: 'gemini',
+                    displayOptions: {
+                        show: {
+                            resource: ['config'],
+                            operation: ['switch'],
+                        },
+                    },
+                    description: 'LLM provider to switch to (must be pre-configured on the server)',
+                },
+                {
+                    displayName: 'Model (Optional)',
+                    name: 'configModel',
+                    type: 'string',
+                    default: '',
+                    displayOptions: {
+                        show: {
+                            resource: ['config'],
+                            operation: ['switch'],
+                        },
+                    },
+                    description: 'Override the default model for the selected provider. Leave empty to use the server default.',
+                    placeholder: 'gemini-3.1-flash-lite-preview',
+                },
+                {
+                    displayName: 'Config (JSON)',
+                    name: 'configJson',
+                    type: 'json',
+                    default: '{}',
+                    displayOptions: {
+                        show: {
+                            resource: ['config'],
+                            operation: ['configure'],
+                        },
+                    },
+                    description: 'Full mem0 configuration object. Replaces the entire server configuration.',
                 },
                 {
                     displayName: 'Message Content',
@@ -1265,6 +1370,42 @@ class Mem0 {
                     }
                     else {
                         throw new n8n_workflow_1.NodeOperationError(this.getNode(), `Unsupported operation for project: ${operation}`);
+                    }
+                }
+                else if (resource === 'config') {
+                    if (operation === 'health') {
+                        const response = await GenericFunctions_1.mem0ApiRequest.call(this, 'GET', '/health');
+                        returnData.push({ json: response });
+                    }
+                    else if (operation === 'getConfig') {
+                        const response = await GenericFunctions_1.mem0ApiRequest.call(this, 'GET', '/config');
+                        returnData.push({ json: response });
+                    }
+                    else if (operation === 'switch') {
+                        const provider = this.getNodeParameter('configProvider', i, 'gemini');
+                        const model = this.getNodeParameter('configModel', i, '') || undefined;
+                        const body = { provider };
+                        if (model) body.model = model;
+                        const response = await GenericFunctions_1.mem0ApiRequest.call(this, 'POST', '/config/switch', body);
+                        returnData.push({ json: response });
+                    }
+                    else if (operation === 'configure') {
+                        const configRaw = this.getNodeParameter('configJson', i, '{}');
+                        let configObj;
+                        try {
+                            configObj = typeof configRaw === 'string' ? JSON.parse(configRaw) : configRaw;
+                        } catch (_) {
+                            throw new n8n_workflow_1.NodeOperationError(this.getNode(), 'Config JSON is invalid. Please provide a valid JSON object.');
+                        }
+                        const response = await GenericFunctions_1.mem0ApiRequest.call(this, 'POST', '/configure', configObj);
+                        returnData.push({ json: response || { success: true } });
+                    }
+                    else if (operation === 'reset') {
+                        const response = await GenericFunctions_1.mem0ApiRequest.call(this, 'POST', '/reset', {});
+                        returnData.push({ json: response || { success: true } });
+                    }
+                    else {
+                        throw new n8n_workflow_1.NodeOperationError(this.getNode(), `Unsupported operation for config: ${operation}`);
                     }
                 }
             }
