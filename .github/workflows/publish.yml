@@ -2,17 +2,12 @@ name: Publish to npm
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - master
-    paths:
-      - 'package/**'
 
 jobs:
   publish:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
     defaults:
       run:
         working-directory: package
@@ -24,6 +19,16 @@ jobs:
         with:
           node-version: '18'
           registry-url: 'https://registry.npmjs.org'
+
+      - name: Bump patch version
+        working-directory: .
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          npm version patch --no-git-tag-version --prefix package
+          git add package/package.json package/package-lock.json
+          git commit -m "chore: bump version [skip ci]"
+          git push --force-with-lease
 
       - name: Publish to npm
         run: npm publish --access public
