@@ -1,121 +1,193 @@
-﻿# @surreal7/n8n-nodes-mem0
+# @unwarkz/n8n-nodes-mem0
 
-[![npm version](https://img.shields.io/npm/v/@surreal7/n8n-nodes-mem0.svg)](https://www.npmjs.com/package/@surreal7/n8n-nodes-mem0)
-[![npm downloads](https://img.shields.io/npm/dm/@surreal7/n8n-nodes-mem0.svg)](https://www.npmjs.com/package/@surreal7/n8n-nodes-mem0)
+[![npm version](https://img.shields.io/npm/v/@unwarkz/n8n-nodes-mem0.svg)](https://www.npmjs.com/package/@unwarkz/n8n-nodes-mem0)
 
-## Introduo
-Mem0  uma camada inteligente de memria para agentes e aplicaes de IA. Este pacote entrega nodes customizados para o n8n que permitem criar, buscar, atualizar e conectar memrias persistentes (incluindo modos semnticos e hbridos) diretamente aos fluxos e agentes do n8n, tanto na nuvem Mem0 quanto em instncias self-hosted.
+## Introduction
 
-## Instalao
-### Pelo painel de Community Nodes (recomendado)
-1. Em **Settings > Community Nodes**, clique em **Install**.
-2. Informe @surreal7/n8n-nodes-mem0.
-3. Confirme para instalar e reinicie o n8n.
+Mem0 is an intelligent memory layer for AI agents and applications. This package delivers custom nodes for n8n that let you create, search, update, and connect persistent memories (including semantic and hybrid modes) directly to n8n workflows and agents — both via the Mem0 cloud service and self-hosted instances (including the [arti2 mem0-service](https://github.com/unwarkz/arti2)).
 
-### Instalao manual
-`ash
+## Installation
+
+### Via Community Nodes panel (recommended)
+1. Go to **Settings > Community Nodes** and click **Install**.
+2. Enter `@unwarkz/n8n-nodes-mem0`.
+3. Confirm and restart n8n.
+
+### Manual installation
+```bash
 cd ~/.n8n/nodes
-npm install @surreal7/n8n-nodes-mem0
-`
-Reinicie o n8n para carregar os nodes.
+npm install @unwarkz/n8n-nodes-mem0
+```
+Restart n8n to load the nodes.
 
-### Configurao de credenciais
-- **Mem0 Cloud (api.mem0.ai)**: gere a chave em *Dashboard > API Keys* e cadastre em **Credentials > Mem0 API**.
-- **Mem0 Self-hosted**: informe a URL da instncia e a API key em **Mem0 Self Hosted API**.
+### Credential setup
+- **Mem0 Cloud (api.mem0.ai)**: generate a key at *Dashboard > API Keys* and register it under **Credentials > Mem0 API**.
+- **Mem0 Self-Hosted**: provide the instance URL and optional API key under **Mem0 Self-Hosted API**.
 
-## Nodes includos
-- **Mem0**  Node operacional completo (CRUD de memrias, buscas semnticas, gerenciamento de entidades, histrico).
-- **Mem0 Memory**  Fonte de memria pronta para conectar ao AI Agent do n8n (modos Bsico, Resumo, Semntico v1, Semntico v2 e Hbrido).
+## Included Nodes
 
-## Referncia detalhada
-### Node Mem0
-#### Parmetros comuns
-- **Tipo de Autenticao**: escolhe entre Nuvem (api.mem0.ai) e Self-hosted.
-- **Recurso**: Memria ou Entidade.
-- **Operao**: muda conforme o recurso (Adicionar, Buscar, Buscar Avanada, Atualizar, Deletar, Histrico etc.).
-- **IDs / Escopo** (User ID, Agent ID, App ID, Run ID): permitem ancorar a memria a usurios/agentes/aplicaes especficas.
-- **Campos auxiliares** (dditionalFields, updateFields): oferecem metadata customizada, categorias e opes de incluso/excluso.
+| Node | Description |
+|------|-------------|
+| **Mem0** | Full CRUD node — add, search, update, delete memories and manage entities, organizations, and projects. |
+| **Mem0 Memory** | Memory source for the AI Agent node — exposes stored memories through the AI Agent's Memory port. |
+| **Mem0 AI Tools** | Tools provider for the AI Agent node — exposes search, add, get, and delete operations as callable tools. |
 
-#### Recurso: Memria
-##### Adicionar
-- **Contedo da Mensagem**: texto principal da lembrana.
-- **Tipo de Mensagem**: user, ssistant ou system (define o papel no array messages).
-- **User ID / Agent ID / App ID / Run ID**: identificadores opcionais para vincular a memria.
-- **Metadados** (coleo chave/valor).
-- **Categorias Personalizadas** (customCategories).
-- **Includes / Excludes / Infer**: controlam seleo de memrias relacionadas e inferncia automtica do Mem0.
+---
 
-##### Buscar (bsica  /v1/memories/search/)
-- **Consulta de Busca**: texto natural.
-- **Quantidade de Resultados (topK)**, **Reordenar Resultados (rerank)**, **Campos a Retornar (fields)**.
-- **Filtrar por Metadados**: coleo de Chave do Metadado + Valor Esperado que gera metadata no corpo da requisio.
+## Node Reference
 
-##### Buscar memrias (avanada  /v2/memories/search/)
-- **Consulta de Busca**.
-- **Opes**: 	opK, erank, ields semelhantes ao modo bsico.
-- **Filtros Avanados** *(novo no-code)*: coleo de regras sem cdigo.
-  - **Campo**: exemplo memory, user_id, metadata.categoria.
-  - **Operao**: Igual, Diferente, Contm, Maior que, Menor que.
-  - **Valor**: string avaliada; nmeros/boolean/JSON so interpretados automaticamente.
-  - Cada regra vira parte de um AND enviado ao /v2/memories/search/ (usa os operadores 
-e, icontains, gt, lt).
+### Mem0 (CRUD Node)
 
-##### Listar mltiplas (getAll)
-- Retorna memrias filtradas por user_id, gent_id, pp_id, un_id.
+#### Common Parameters
+- **Authentication Type**: choose between Cloud (`api.mem0.ai`) and Self-Hosted.
+- **Resource**: Memory, Entity, Organization, or Project.
+- **Operation**: changes based on the selected resource (Add, Search, Advanced Search, Update, Delete, History, etc.).
+- **Scope IDs** (User ID, Agent ID, App ID, Run ID): anchor the memory to specific users / agents / applications.
+- **Additional Fields / Update Fields**: custom metadata, categories, include/exclude field lists.
 
-##### Buscar por ID (get), Atualizar (update), Deletar (delete), Deletar todas (deleteAll)
-- Parametrizadas por **ID da Memria** ou pelos filtros de escopo (user_id, etc.).
-- Atualizao permite editar 	ext e metadata via coleo chave/valor.
+#### Resource: Memory
 
-##### Histrico (history)
-- Requer **ID da Memria** e retorna o histrico de alteraes /v1/memories/{id}/history/.
+##### Add
+- **Message Content**: the main text to remember.
+- **Message Role**: `user`, `assistant`, or `system`.
+- **User ID / Agent ID / App ID / Run ID**: optional identifiers.
+- **Metadata** (key-value collection).
+- **Custom Categories** (key-value collection).
+- **Include Only / Exclude Fields / Automatic Inference**: control what Mem0 processes.
 
-#### Recurso: Entidade
-- **Operao**: Listar Mltiplas (GET /v1/entities/) ou Deletar (DELETE /v1/entities/{tipo}/{id}/).
-- **Tipo de Entidade**: user, gent, pp, un.
-- **ID da Entidade**: identificador textual.
+##### Semantic Search (`/v1/memories/search/` on cloud, `/search` on self-hosted)
+- **Search Query**: natural language text.
+- **Number of Results (topK)**, **Rerank Results**, **Fields to Return**.
+- **Filter by Metadata**: key-value collection that adds metadata filters to the request body.
 
-### Node Mem0 Memory (AI Agent)
-#### Parmetros
-- **Autenticao**: Nuvem ou Self-hosted.
-- **ID da Thread**: identificador nico. Se vazio, usa $json.threadId ou $executionId.
-- **Modo de Recuperao de Contexto**:
-  - **Bsico**: retorna memrias brutas (todas ou ltimas *N*).
-  - **Resumo**: monta um texto resumido das memrias recuperadas.
-  - **Semntico (v1)**: /v1/memories/search/ com query, 	opK, erank, ields.
-  - **Semntico (v2)**: /v2/memories/search/ com filtros, 	opK, erank, ields.
-  - **Hbrido** *(novo)*: combina memrias recentes (GET /v1/memories/) com uma busca semntica v2. Aplica time-decay, peso lpha, MMR e devolve o ranking mais relevante ao agente.
-- **Consulta**: sugerido ={{ .query || .lastUserMessage }}.
-- **Chave de Memria**: chave JSON enviada ao AI Agent (padro chat_history).
+##### Advanced Search (v2)
+- **Search Query**.
+- **Options**: topK, rerank, fields (same as basic search).
+- **Advanced Filters** *(no-code)*: collection of rules, each with:
+  - **Field**: e.g. `memory`, `user_id`, `metadata.category`
+  - **Operation**: Equals, Not Equals, Contains, Greater Than, Less Than
+  - **Value**: string; numbers / booleans / JSON are interpreted automatically
+  - Rules are combined with AND and sent to the search endpoint.
 
-#### Avanado (coleo)
-- **User ID / Agent ID / App ID / Run ID**: usados para GET/POST.
-- **Top K**: quantidade de memrias em modos semnticos ou hbrido (default 25).
-- **Rerank / Fields**: aplicveis aos modos semnticos.
-- **Filters (JSON)**: filtros enviados ao /v2/memories/search/ (Semntico v2 e Hbrido) no padro Mem0.
-- **Last N (recentes)**: limita quantas memrias recentes entram no Bsico, Resumo ou componente recente do Hbrido.
-- **Alpha (peso semntico)**: peso da relevncia semntica vs. recency score no Hbrido (default 0.65).
-- **Half-life (horas)**: meia-vida usada no decaimento temporal (default 48h).
-- **Mximo a retornar**: limite final de memrias entregues ao AI Agent.
-- **MMR (diversidade)** e **MMR Lambda**: controlam Maximal Marginal Relevance.
+##### List Multiple (getAll)
+Returns memories filtered by `user_id`, `agent_id`, `app_id`, `run_id`.
 
-O node implementa supplyData e expe o resultado diretamente ao conector Memory do AI Agent. No modo hbrido, a pipeline : recentes  semntico v2  merge/dedup  score hbrido  MMR  trim maxReturn.
+##### Get, Update, Delete, Delete All, History
+Parameterized by **Memory ID** or scope filters. Update allows editing `text` and metadata.
 
-## Exemplos de uso
-### 1. Buscar memrias avanadas sem cdigo
-1. Arraste **Mem0** e selecione *Recurso = Memria*, *Operao = Buscar Avanada*.
-2. Informe a consulta (ex.: Preferncias do cliente ACME).
-3. Use **Filtros Avanados** para criar regras como: Campo = metadata.segmento, Operao = Igual, Valor = enterprise.
-4. Opcional: ajuste Top K, campos retornados e erank.
-5. Conecte o resultado ao seu fluxo (Set, Merge, etc.) para personalizar respostas.
+#### Resource: Entity
+- **Operations**: Create, Get, List Multiple, Update, Delete.
+- **Entity Type**: user, agent, app, run.
+- **Entity ID**: text identifier.
 
-### 2. Conectar o Mem0 ao AI Agent com modo hbrido
-1. Adicione **Mem0 Memory** e configure as credenciais.
-2. Em **Modo de Recuperao**, escolha *Hbrido*.
-3. Mantenha Consulta = {{.lastUserMessage}} e Chave de Memria = chat_history.
-4. (Opcional) Ajuste Last N, Top K, Alpha e Half-life para o equilbrio desejado.
-5. Relacione a sada i_memory ao conector **Memory** do node *AI Agent*.
-6. As respostas do agente passam a considerar tanto o contexto recente quanto lembranas semnticas relevantes, com rerank e diversidade.
+---
 
-## Licena
-MIT. No publique informaes confidenciais em seus fluxos ou no registro do npm.
+### Mem0 Memory (AI Agent Memory Port)
+
+Connect the `ai_memory` output to an **AI Agent** node's **Memory** input.
+
+#### Parameters
+- **Authentication**: Cloud or Self-Hosted.
+- **Thread ID**: unique conversation identifier. Defaults to `$json.threadId || $executionId`.
+- **Context Retrieval Mode**:
+  - **Basic**: returns raw memories (all or last *N*).
+  - **Summary**: builds a summarised text from retrieved memories.
+  - **Semantic (v1)**: uses the search endpoint with query, topK, rerank, fields.
+  - **Semantic (v2)**: uses the search endpoint with advanced filters, topK, rerank, fields.
+  - **Hybrid** *(advanced)*: combines recent memories (GET `/v1/memories/`) with semantic search, applies time-decay, alpha weighting, MMR, and delivers the most relevant ranking to the agent.
+- **Query**: suggested `={{ $json.query || $json.lastUserMessage }}`.
+- **Memory Key**: JSON key sent to the AI Agent (default `chat_history`).
+
+#### How it Works with the AI Agent
+When connected to the AI Agent's Memory port, the node:
+1. Implements `loadMemoryVariables(values)` — fetches relevant memories and returns them to the agent as context.
+2. Implements `saveContext(inputValues, outputValues)` — automatically saves each conversation turn (user input + assistant response) back to Mem0 after the agent responds.
+
+#### Advanced (collection)
+| Option | Description |
+|--------|-------------|
+| User ID / Agent ID / App ID / Run ID | Identifiers for GET / POST operations |
+| Top K | Number of memories in semantic or hybrid mode (default 25) |
+| Rerank / Fields | Applicable in semantic modes |
+| Filters (JSON) | Filters sent to search (Semantic v2 and Hybrid) |
+| Last N (recent) | Limits recent memories in Basic, Summary, or Hybrid |
+| Alpha (semantic weight) | Semantic relevance vs. recency score weight in Hybrid (default 0.65) |
+| Half-life (hours) | Half-life for time decay (default 48 h) |
+| Maximum to Return | Final cap on memories delivered to the AI Agent |
+| MMR (diversity) / MMR Lambda | Maximal Marginal Relevance controls |
+| Save Context | When enabled, conversation turns are saved to Mem0 automatically |
+
+---
+
+### Mem0 AI Tools (AI Agent Tools Port)
+
+Connect the `ai_tool` output to an **AI Agent** node's **Tools** input.
+
+#### Parameters
+- **Authentication**: Cloud or Self-Hosted.
+- **User ID / Agent ID / Run ID**: default scope applied to all tool calls.
+- **Tools to Enable**: select which tools to expose.
+- **Search Options**: topK, rerank (applies when Search Memory is enabled).
+
+#### Available Tools
+
+| Tool Name | Description |
+|-----------|-------------|
+| `mem0_search_memory` | Semantic search over stored memories. Input: `{"query": "...", "top_k": 5}` |
+| `mem0_add_memory` | Save a new memory. Input: `{"content": "...", "role": "user"}` |
+| `mem0_get_all_memories` | Get all memories for the configured scope. |
+| `mem0_delete_memory` | Delete a memory by ID. Input: `{"memory_id": "..."}` |
+| `mem0_get_memory_history` | Get change history of a memory. Input: `{"memory_id": "..."}` |
+
+Each tool accepts a JSON string input and returns a JSON string output that the AI Agent can use to formulate its response.
+
+---
+
+## Self-Hosted API Compatibility
+
+This package is designed to work with the [arti2 mem0-service](https://github.com/unwarkz/arti2/blob/main/mem0-service/app.py), which exposes a FastAPI-based REST API compatible with the official Mem0 REST API. Key differences handled automatically:
+
+| Endpoint | Cloud (api.mem0.ai) | Self-Hosted (arti2) |
+|----------|--------------------|--------------------|
+| Semantic search | `POST /v1/memories/search/` | `POST /search` |
+| V2 / advanced search | `POST /v2/memories/search/` | `POST /search` |
+| All other endpoints | Same path on both |
+
+The node automatically translates endpoints when **Self-Hosted** authentication is selected.
+
+### Additional Self-Hosted Endpoints (accessible via Mem0 node)
+- `GET /health` — service status
+- `GET /config` — current LLM / embedder configuration
+- `POST /config/switch` — switch LLM provider on the fly
+- `POST /reset` — reset all memories
+
+---
+
+## Usage Examples
+
+### 1. Search memories with advanced filters
+1. Drag **Mem0** and select *Resource = Memory*, *Operation = Advanced Search*.
+2. Enter a query (e.g. "ACME client preferences").
+3. Use **Advanced Filters** to add a rule: Field = `metadata.segment`, Operation = Equals, Value = `enterprise`.
+4. Optionally adjust Top K, Fields, and Rerank.
+5. Connect the output to your workflow (Set, Merge, etc.).
+
+### 2. Connect Mem0 Memory to an AI Agent (Hybrid mode)
+1. Add **Mem0 Memory** and configure credentials.
+2. Set **Context Retrieval Mode** to *Hybrid*.
+3. Set **Query** to `={{ $json.lastUserMessage }}` and **Memory Key** to `chat_history`.
+4. (Optional) Adjust Last N, Top K, Alpha, and Half-life.
+5. Connect the `ai_memory` output to the **Memory** port of the *AI Agent* node.
+6. The agent will now retrieve relevant memories as context and automatically save each turn.
+
+### 3. Give the AI Agent Mem0 tools
+1. Add **Mem0 AI Tools** and configure credentials.
+2. Set a default **User ID** to scope all tool calls.
+3. Enable the tools you need (Search Memory, Add Memory, etc.).
+4. Connect the `ai_tool` output to the **Tools** port of the *AI Agent* node.
+5. The agent can now call `mem0_search_memory`, `mem0_add_memory`, etc. autonomously.
+
+---
+
+## License
+MIT. Do not commit sensitive information (API keys, personal data) to your workflows or to the npm registry.

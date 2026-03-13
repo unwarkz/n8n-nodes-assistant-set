@@ -51,7 +51,7 @@ class Mem0Memory {
                     type: 'options',
                     options: [
                         { name: 'Cloud (mem0.ai)', value: 'cloud' },
-                        { name: 'Self-hosted', value: 'selfHosted' },
+                        { name: 'Self-Hosted', value: 'selfHosted' },
                     ],
                     default: 'cloud',
                 },
@@ -68,15 +68,15 @@ class Mem0Memory {
                     type: 'options',
                     options: [
                         { name: 'Basic', value: 'basic', description: 'Returns raw memories (recent or all)' },
-                        { name: 'Resumo', value: 'summary', description: 'Retorna um resumo simples em texto' },
+                        { name: 'Summary', value: 'summary', description: 'Returns a simple text summary of memories' },
                         { name: 'Semantic (v1)', value: 'semantic', description: 'Semantic search using the v1 endpoint with rerank option' },
                         { name: 'Semantic (v2)', value: 'semanticV2', description: 'Advanced semantic search with filters (v2)' },
-                        { name: 'Hybrid', value: 'hybrid', description: 'Combines recent memories with semantic search (v2) using time-decay and hybrid scoring' },
+                        { name: 'Hybrid', value: 'hybrid', description: 'Combines recent memories with semantic search using time-decay and hybrid scoring' },
                     ],
                     default: 'basic',
                 },
                 {
-                    displayName: 'Consulta',
+                    displayName: 'Query',
                     name: 'query',
                     type: 'string',
                     default: '={{ $json.query || $json.lastUserMessage || "" }}',
@@ -95,7 +95,7 @@ class Mem0Memory {
                     description: 'Key under which the memory will be returned',
                 },
                 {
-                    displayName: 'Avançado',
+                    displayName: 'Advanced',
                     name: 'advanced',
                     type: 'collection',
                     placeholder: 'Options',
@@ -115,20 +115,19 @@ class Mem0Memory {
                         { displayName: 'Maximum to Return', name: 'maxReturn', type: 'number', typeOptions: { minValue: 1 }, default: 30, description: 'Final number of memories returned to the agent', displayOptions: { show: { '/retrievalMode': ['hybrid'] } } },
                         { displayName: 'MMR (diversity)', name: 'mmr', type: 'boolean', default: true, description: 'Apply result diversity (Maximal Marginal Relevance)', displayOptions: { show: { '/retrievalMode': ['hybrid'] } } },
                         { displayName: 'MMR Lambda', name: 'mmrLambda', type: 'number', typeOptions: { minValue: 0, maxValue: 1, numberPrecision: 2 }, default: 0.5, description: 'Balance between relevance and diversity in MMR', displayOptions: { show: { '/retrievalMode': ['hybrid'] } } },
+                        { displayName: 'Save Context', name: 'saveContext', type: 'boolean', default: true, description: 'When enabled, new conversation turns are automatically saved to Mem0' },
                     ],
                 },
             ],
         };
     }
-    // For AI connections, n8n reads from supplyData. We also
-    // implement execute as a fallback to surface JSON data.
-    async supplyData(itemIndex) {
+
+    /**
+     * Fetches memories from Mem0 API and returns them as a formatted array.
+     * Used by both supplyData (memory interface) and execute (fallback).
+     */
+    async _fetchMemories(retrievalMode, threadId, query, adv) {
         var _a, _b, _c, _d, _e, _f, _g;
-        const memoryKey = this.getNodeParameter('memoryKey', itemIndex);
-        const retrievalMode = this.getNodeParameter('retrievalMode', itemIndex);
-        const threadId = this.getNodeParameter('threadId', itemIndex);
-        const adv = (this.getNodeParameter('advanced', itemIndex, {}) || {});
-        const query = this.getNodeParameter('query', itemIndex, '') || '';
         let payload;
         if (retrievalMode === 'semantic' || retrievalMode === 'semanticV2' || retrievalMode === 'hybrid') {
             const body = { query };
@@ -153,15 +152,15 @@ class Mem0Memory {
             if (retrievalMode === 'semanticV2' || retrievalMode === 'hybrid') {
                 try {
                     const filters = typeof adv.filters === 'string' ? JSON.parse(adv.filters) : (adv.filters || {});
-                    body.filters = filters;
+                    if (Object.keys(filters).length) body.filters = filters;
                 }
                 catch { }
             }
-            const url = retrievalMode === 'semanticV2' || retrievalMode === 'hybrid' ? '/v2/memories/search/' : '/v1/memories/search/';
-            const semRes = await GenericFunctions_1.mem0ApiRequest.call(this, 'POST', url, body);
-            let semMemories = Array.isArray(semRes) ? semRes : [semRes];
+            // Use /v1/memories/search/ for cloud, /search for self-hosted (translated by GenericFunctions)
+            const semRes = await GenericFunctions_1.mem0ApiRequest.call(this, 'POST', '/v1/memories/search/', body);
+            let semMemories = Array.isArray(semRes) ? semRes : (semRes ? [semRes] : []);
             if (retrievalMode === 'hybrid') {
-                // coletar recentes
+                // Collect recent memories
                 const qs = {};
                 if (adv.userId)
                     qs.user_id = String(adv.userId);
@@ -174,11 +173,11 @@ class Mem0Memory {
                 if (adv.runId)
                     qs.run_id = String(adv.runId);
                 const recRes = await GenericFunctions_1.mem0ApiRequest.call(this, 'GET', '/v1/memories/', {}, qs);
-                let recents = Array.isArray(recRes) ? recRes : [recRes];
+                let recents = Array.isArray(recRes) ? recRes : (recRes ? [recRes] : []);
                 const lastN = Number((_a = adv.lastN) !== null && _a !== void 0 ? _a : 20);
                 if (lastN > 0)
                     recents = recents.slice(-lastN);
-                // hybrid scoring
+                // Hybrid scoring
                 const alpha = Number((_b = adv.alpha) !== null && _b !== void 0 ? _b : 0.65);
                 const halfLife = Number((_c = adv.halfLifeHours) !== null && _c !== void 0 ? _c : 48);
                 const maxReturn = Number((_d = adv.maxReturn) !== null && _d !== void 0 ? _d : 30);
@@ -190,7 +189,7 @@ class Mem0Memory {
                 const createdOf = (m) => m.created_at || m.createdAt || m.timestamp || m.time || m.date;
                 const scoreOf = (m) => { var _a, _b, _c, _d; return (_d = (_c = (_b = (_a = m.score) !== null && _a !== void 0 ? _a : m.similarity) !== null && _b !== void 0 ? _b : m.relevance) !== null && _c !== void 0 ? _c : m.rank) !== null && _d !== void 0 ? _d : 1; };
                 const merged = new Map();
-                // add semantic part
+                // Add semantic results
                 for (const m of semMemories) {
                     const id = idOf(m);
                     const created = createdOf(m);
@@ -206,7 +205,7 @@ class Mem0Memory {
                     const hybrid = alpha * sem + (1 - alpha) * recency;
                     merged.set(id, { m, semanticScore: sem, recencyScore: recency, hybrid });
                 }
-                // add recents part
+                // Add recent results
                 for (const m of recents) {
                     const id = idOf(m);
                     const created = createdOf(m);
@@ -226,10 +225,9 @@ class Mem0Memory {
                 let ranked = Array.from(merged.values());
                 ranked.sort((a, b) => b.hybrid - a.hybrid);
                 if (mmr && ranked.length > 2) {
-                    // MMR greedy (sem embeddings; usa score como proxy)
+                    // MMR greedy (without embeddings; uses score as proxy)
                     const selected = [];
                     const rest = [...ranked];
-                    // pick top-1
                     selected.push(rest.shift());
                     while (selected.length < Math.min(maxReturn, ranked.length) && rest.length) {
                         let bestIdx = 0;
@@ -237,7 +235,6 @@ class Mem0Memory {
                         for (let i = 0; i < rest.length; i++) {
                             const cand = rest[i];
                             const rel = cand.hybrid;
-                            // simple diversity: penalize if too similar to already chosen (approximation via score difference)
                             const sim = Math.max(...selected.map((s) => 1 - Math.abs(s.hybrid - cand.hybrid)));
                             const mmrScore = mmrLambda * rel - (1 - mmrLambda) * sim;
                             if (mmrScore > bestScore) {
@@ -261,7 +258,7 @@ class Mem0Memory {
             if (adv.userId)
                 qs.user_id = String(adv.userId);
             else
-                qs.user_id = threadId; // default
+                qs.user_id = threadId;
             if (adv.agentId)
                 qs.agent_id = String(adv.agentId);
             if (adv.appId)
@@ -269,7 +266,7 @@ class Mem0Memory {
             if (adv.runId)
                 qs.run_id = String(adv.runId);
             const res = await GenericFunctions_1.mem0ApiRequest.call(this, 'GET', '/v1/memories/', {}, qs);
-            let memories = Array.isArray(res) ? res : [res];
+            let memories = Array.isArray(res) ? res : (res ? [res] : []);
             // lastN limit
             if (adv.lastN && Number(adv.lastN) > 0)
                 memories = memories.slice(-Number(adv.lastN));
@@ -284,10 +281,91 @@ class Mem0Memory {
                 payload = memories.map((m) => { var _a, _b; return ({ role: 'system', content: (_b = (_a = m.memory) !== null && _a !== void 0 ? _a : m.text) !== null && _b !== void 0 ? _b : JSON.stringify(m) }); });
             }
         }
+        return payload;
+    }
+
+    /**
+     * supplyData is called by the AI Agent to get the memory object.
+     * Returns a LangChain-compatible memory interface with loadMemoryVariables
+     * and saveContext methods so the AI Agent can read and write memories.
+     */
+    async supplyData(itemIndex) {
+        const self = this;
+        const memoryKey = this.getNodeParameter('memoryKey', itemIndex);
+        const retrievalMode = this.getNodeParameter('retrievalMode', itemIndex);
+        const threadId = this.getNodeParameter('threadId', itemIndex);
+        const adv = (this.getNodeParameter('advanced', itemIndex, {}) || {});
+        const query = this.getNodeParameter('query', itemIndex, '') || '';
+        const shouldSaveContext = adv.saveContext !== false;
+
+        // Resolve effective user_id once (used in saveContext)
+        const effectiveUserId = adv.userId ? String(adv.userId) : threadId;
+
+        // Create a LangChain-compatible memory object
+        const memoryObj = {
+            memoryKeys: [memoryKey],
+
+            async loadMemoryVariables(values) {
+                try {
+                    // Use the provided input as query when in semantic modes
+                    const effectiveQuery = query || (values && (values.input || values.query || values.lastUserMessage || ''));
+                    const payload = await self._fetchMemories(retrievalMode, threadId, effectiveQuery, adv);
+                    return { [memoryKey]: payload };
+                }
+                catch (err) {
+                    // Return empty on error so the agent can still operate
+                    return { [memoryKey]: [] };
+                }
+            },
+
+            async saveContext(inputValues, outputValues) {
+                if (!shouldSaveContext) return;
+                try {
+                    const messages = [];
+                    const userInput = inputValues && (inputValues.input || inputValues.human_input || inputValues.query);
+                    const aiOutput = outputValues && (outputValues.output || outputValues.response || outputValues.text);
+                    if (userInput) messages.push({ role: 'user', content: String(userInput) });
+                    if (aiOutput) messages.push({ role: 'assistant', content: String(aiOutput) });
+                    if (messages.length === 0) return;
+                    const body = { messages };
+                    if (adv.userId)
+                        body.user_id = String(adv.userId);
+                    else
+                        body.user_id = effectiveUserId;
+                    if (adv.agentId) body.agent_id = String(adv.agentId);
+                    if (adv.appId) body.app_id = String(adv.appId);
+                    if (adv.runId) body.run_id = String(adv.runId);
+                    await GenericFunctions_1.mem0ApiRequest.call(self, 'POST', '/v1/memories/', body);
+                }
+                catch (err) {
+                    // Silently ignore save errors to not disrupt the agent
+                }
+            },
+
+            async clear() {
+                try {
+                    const qs = {};
+                    if (adv.userId)
+                        qs.user_id = String(adv.userId);
+                    else
+                        qs.user_id = effectiveUserId;
+                    if (adv.agentId) qs.agent_id = String(adv.agentId);
+                    if (adv.appId) qs.app_id = String(adv.appId);
+                    if (adv.runId) qs.run_id = String(adv.runId);
+                    await GenericFunctions_1.mem0ApiRequest.call(self, 'DELETE', '/v1/memories/', {}, qs);
+                }
+                catch (err) {
+                    // Silently ignore clear errors
+                }
+            },
+        };
+
         return {
-            response: { [memoryKey]: payload },
+            response: memoryObj,
         };
     }
+
+    // execute is a fallback when the node is not connected to an AI Agent memory port
     async execute() {
         const items = this.getInputData();
         const returnData = [];
@@ -298,64 +376,7 @@ class Mem0Memory {
             const threadId = this.getNodeParameter('threadId', i);
             const adv = (this.getNodeParameter('advanced', i, {}) || {});
             const query = this.getNodeParameter('query', i, '') || '';
-            let payload;
-            if (retrievalMode === 'semantic' || retrievalMode === 'semanticV2') {
-                const body = { query };
-                if (adv.userId)
-                    body.user_id = String(adv.userId);
-                else
-                    body.user_id = threadId;
-                if (adv.agentId)
-                    body.agent_id = String(adv.agentId);
-                if (adv.appId)
-                    body.app_id = String(adv.appId);
-                if (adv.runId)
-                    body.run_id = String(adv.runId);
-                if (adv.topK)
-                    body.top_k = Number(adv.topK);
-                if (adv.rerank !== undefined)
-                    body.rerank = Boolean(adv.rerank);
-                if (typeof adv.fields === 'string' && adv.fields)
-                    body.fields = String(adv.fields).split(',').map((f) => f.trim());
-                if (retrievalMode === 'semanticV2') {
-                    try {
-                        const filters = typeof adv.filters === 'string' ? JSON.parse(adv.filters) : (adv.filters || {});
-                        body.filters = filters;
-                    }
-                    catch { }
-                }
-                const url = retrievalMode === 'semanticV2' ? '/v2/memories/search/' : '/v1/memories/search/';
-                const res = await GenericFunctions_1.mem0ApiRequest.call(this, 'POST', url, body);
-                const memories = Array.isArray(res) ? res : [res];
-                payload = memories.map((m) => { var _a, _b; return ({ role: 'system', content: (_b = (_a = m.memory) !== null && _a !== void 0 ? _a : m.text) !== null && _b !== void 0 ? _b : JSON.stringify(m) }); });
-            }
-            else {
-                const qs = {};
-                if (adv.userId)
-                    qs.user_id = String(adv.userId);
-                else
-                    qs.user_id = threadId;
-                if (adv.agentId)
-                    qs.agent_id = String(adv.agentId);
-                if (adv.appId)
-                    qs.app_id = String(adv.appId);
-                if (adv.runId)
-                    qs.run_id = String(adv.runId);
-                const res = await GenericFunctions_1.mem0ApiRequest.call(this, 'GET', '/v1/memories/', {}, qs);
-                let memories = Array.isArray(res) ? res : [res];
-                if (adv.lastN && Number(adv.lastN) > 0)
-                    memories = memories.slice(-Number(adv.lastN));
-                if (retrievalMode === 'summary') {
-                    const text = memories
-                        .map((m) => m.memory || m.text || m.value)
-                        .filter(Boolean)
-                        .join('\n');
-                    payload = [{ role: 'system', content: `Summary of memories:\n${text}` }];
-                }
-                else {
-                    payload = memories.map((m) => { var _a, _b; return ({ role: 'system', content: (_b = (_a = m.memory) !== null && _a !== void 0 ? _a : m.text) !== null && _b !== void 0 ? _b : JSON.stringify(m) }); });
-                }
-            }
+            const payload = await this._fetchMemories(retrievalMode, threadId, query, adv);
             const json = {};
             json[memoryKey] = payload;
             returnData.push({ json });

@@ -7,7 +7,7 @@ const buildKeyValueFromCollection = (collection) => {
     var _a, _b;
     if (!collection || typeof collection !== 'object')
         return undefined;
-    const entries = collection.metadados;
+    const entries = collection.entries || collection.metadados;
     if (!Array.isArray(entries))
         return undefined;
     const metadata = {};
@@ -430,7 +430,7 @@ class Mem0 {
                                             name: 'key',
                                             type: 'string',
                                             default: '',
-                                            placeholder: 'categoria',
+                                            placeholder: 'category',
                                         },
                                         {
                                             displayName: 'Expected Value',
@@ -499,7 +499,7 @@ class Mem0 {
                         },
                     ],
                 },
-                // Operacoes para entidades
+                // Operations for entities
                 {
                     displayName: 'Operation',
                     name: 'operation',
@@ -644,7 +644,7 @@ class Mem0 {
                         { displayName: 'Project ID', name: 'projectId', type: 'string', default: '' },
                     ],
                 },
-                // Operacoes para organizacoes
+                // Operations for organizations
                 {
                     displayName: 'Operation',
                     name: 'operation',
@@ -743,7 +743,7 @@ class Mem0 {
                         },
                     ],
                 },
-                // Operacoes para projetos
+                // Operations for projects
                 {
                     displayName: 'Operation',
                     name: 'operation',
