@@ -1023,12 +1023,12 @@ class Mem0 {
                             });
                             body.custom_categories = categoriesObj;
                         }
-                        const response = await GenericFunctions_1.mem0ApiRequest.call(this, 'POST', '/v1/memories/', body);
+                        const response = await GenericFunctions_1.mem0ApiRequest.call(this, 'POST', '/v1/memories', body);
                         returnData.push({ json: response });
                     }
                     else if (operation === 'get') {
                         const memoryId = this.getNodeParameter('memoryId', i);
-                        const response = await GenericFunctions_1.mem0ApiRequest.call(this, 'GET', `/v1/memories/${memoryId}/`);
+                        const response = await GenericFunctions_1.mem0ApiRequest.call(this, 'GET', `/v1/memories/${memoryId}`);
                         returnData.push({ json: response });
                     }
                     else if (operation === 'getAll') {
@@ -1037,15 +1037,15 @@ class Mem0 {
                         const appId = this.getNodeParameter('appId', i, '');
                         const runId = this.getNodeParameter('runId', i, '');
                         const qs = {};
-                        if (userId)
-                            qs.user_id = userId;
                         if (agentId)
                             qs.agent_id = agentId;
                         if (appId)
                             qs.app_id = appId;
                         if (runId)
                             qs.run_id = runId;
-                        const response = await GenericFunctions_1.mem0ApiRequest.call(this, 'GET', '/v1/memories/', {}, qs);
+                        // Use the dedicated /user/{user_id} path when user_id is provided
+                        const getEndpoint = userId ? `/v1/memories/user/${userId}` : '/v1/memories';
+                        const response = await GenericFunctions_1.mem0ApiRequest.call(this, 'GET', getEndpoint, {}, qs);
                         if (Array.isArray(response))
                             response.forEach(item => returnData.push({ json: item }));
                         else
@@ -1053,7 +1053,7 @@ class Mem0 {
                     }
                     else if (operation === 'delete') {
                         const memoryId = this.getNodeParameter('memoryId', i);
-                        const response = await GenericFunctions_1.mem0ApiRequest.call(this, 'DELETE', `/v1/memories/${memoryId}/`);
+                        const response = await GenericFunctions_1.mem0ApiRequest.call(this, 'DELETE', `/v1/memories/${memoryId}`);
                         returnData.push({ json: response });
                     }
                     else if (operation === 'deleteAll') {
@@ -1070,7 +1070,7 @@ class Mem0 {
                             qs.app_id = appId;
                         if (runId)
                             qs.run_id = runId;
-                        const response = await GenericFunctions_1.mem0ApiRequest.call(this, 'DELETE', '/v1/memories/', {}, qs);
+                        const response = await GenericFunctions_1.mem0ApiRequest.call(this, 'DELETE', '/v1/memories', {}, qs);
                         returnData.push({ json: response });
                     }
                     else if (operation === 'update') {
@@ -1087,7 +1087,7 @@ class Mem0 {
                             });
                             body.metadata = metadataObj;
                         }
-                        const response = await GenericFunctions_1.mem0ApiRequest.call(this, 'PUT', `/v1/memories/${memoryId}/`, body);
+                        const response = await GenericFunctions_1.mem0ApiRequest.call(this, 'PUT', `/v1/memories/${memoryId}`, body);
                         returnData.push({ json: response });
                     }
                     else if (operation === 'search') {
@@ -1121,7 +1121,7 @@ class Mem0 {
                             });
                             body.metadata = metadataObj;
                         }
-                        const response = await GenericFunctions_1.mem0ApiRequest.call(this, 'POST', '/v1/memories/search/', body);
+                        const response = await GenericFunctions_1.mem0ApiRequest.call(this, 'POST', '/v1/memories/search', body);
                         if (Array.isArray(response))
                             response.forEach(item => returnData.push({ json: item }));
                         else
@@ -1186,7 +1186,7 @@ class Mem0 {
                         if (typeof options.fields === 'string' && options.fields.trim()) {
                             body.fields = options.fields.split(',').map((f) => f.trim()).filter((f) => f.length);
                         }
-                        const response = await GenericFunctions_1.mem0ApiRequest.call(this, 'POST', '/v2/memories/search/', body);
+                        const response = await GenericFunctions_1.mem0ApiRequest.call(this, 'POST', '/v2/memories/search', body);
                         if (Array.isArray(response))
                             response.forEach(item => returnData.push({ json: item }));
                         else
@@ -1194,7 +1194,7 @@ class Mem0 {
                     }
                     else if (operation === 'history') {
                         const memoryId = this.getNodeParameter('memoryId', i);
-                        const response = await GenericFunctions_1.mem0ApiRequest.call(this, 'GET', `/v1/memories/${memoryId}/history/`);
+                        const response = await GenericFunctions_1.mem0ApiRequest.call(this, 'GET', `/v1/memories/${memoryId}/history`);
                         if (Array.isArray(response))
                             response.forEach(item => returnData.push({ json: item }));
                         else
@@ -1214,13 +1214,13 @@ class Mem0 {
                         const metadata = buildKeyValueFromCollection(additional.metadata);
                         if (metadata)
                             body.metadata = metadata;
-                        const response = await GenericFunctions_1.mem0ApiRequest.call(this, 'POST', '/v1/entities/', body);
+                        const response = await GenericFunctions_1.mem0ApiRequest.call(this, 'POST', '/v1/entities', body);
                         returnData.push({ json: response });
                     }
                     else if (operation === 'get') {
                         const entityType = this.getNodeParameter('entityType', i);
                         const entityId = this.getNodeParameter('entityId', i);
-                        const response = await GenericFunctions_1.mem0ApiRequest.call(this, 'GET', `/v1/entities/${entityType}/${entityId}/`);
+                        const response = await GenericFunctions_1.mem0ApiRequest.call(this, 'GET', `/v1/entities/${entityType}/${entityId}`);
                         returnData.push({ json: response });
                     }
                     else if (operation === 'getAll') {
@@ -1232,7 +1232,7 @@ class Mem0 {
                             qs.organization_id = filters.organizationId;
                         if (filters.projectId)
                             qs.project_id = filters.projectId;
-                        const response = await GenericFunctions_1.mem0ApiRequest.call(this, 'GET', '/v1/entities/', {}, qs);
+                        const response = await GenericFunctions_1.mem0ApiRequest.call(this, 'GET', '/v1/entities', {}, qs);
                         if (Array.isArray(response))
                             response.forEach(item => returnData.push({ json: item }));
                         else
@@ -1252,13 +1252,13 @@ class Mem0 {
                         const metadata = buildKeyValueFromCollection(updateFields.metadata);
                         if (metadata)
                             body.metadata = metadata;
-                        const response = await GenericFunctions_1.mem0ApiRequest.call(this, 'PUT', `/v1/entities/${entityType}/${entityId}/`, body);
+                        const response = await GenericFunctions_1.mem0ApiRequest.call(this, 'PUT', `/v1/entities/${entityType}/${entityId}`, body);
                         returnData.push({ json: response });
                     }
                     else if (operation === 'delete') {
                         const entityType = this.getNodeParameter('entityType', i);
                         const entityId = this.getNodeParameter('entityId', i);
-                        const response = await GenericFunctions_1.mem0ApiRequest.call(this, 'DELETE', `/v1/entities/${entityType}/${entityId}/`);
+                        const response = await GenericFunctions_1.mem0ApiRequest.call(this, 'DELETE', `/v1/entities/${entityType}/${entityId}`);
                         returnData.push({ json: response });
                     }
                     else {
@@ -1277,16 +1277,16 @@ class Mem0 {
                         const metadata = buildKeyValueFromCollection(additional.metadata);
                         if (metadata)
                             body.metadata = metadata;
-                        const response = await GenericFunctions_1.mem0ApiRequest.call(this, 'POST', '/v1/organizations/', body);
+                        const response = await GenericFunctions_1.mem0ApiRequest.call(this, 'POST', '/v1/organizations', body);
                         returnData.push({ json: response });
                     }
                     else if (operation === 'get') {
                         const organizationId = this.getNodeParameter('organizationId', i);
-                        const response = await GenericFunctions_1.mem0ApiRequest.call(this, 'GET', `/v1/organizations/${organizationId}/`);
+                        const response = await GenericFunctions_1.mem0ApiRequest.call(this, 'GET', `/v1/organizations/${organizationId}`);
                         returnData.push({ json: response });
                     }
                     else if (operation === 'getAll') {
-                        const response = await GenericFunctions_1.mem0ApiRequest.call(this, 'GET', '/v1/organizations/');
+                        const response = await GenericFunctions_1.mem0ApiRequest.call(this, 'GET', '/v1/organizations');
                         if (Array.isArray(response))
                             response.forEach(item => returnData.push({ json: item }));
                         else
@@ -1305,12 +1305,12 @@ class Mem0 {
                         const metadata = buildKeyValueFromCollection(updateFields.metadata);
                         if (metadata)
                             body.metadata = metadata;
-                        const response = await GenericFunctions_1.mem0ApiRequest.call(this, 'PUT', `/v1/organizations/${organizationId}/`, body);
+                        const response = await GenericFunctions_1.mem0ApiRequest.call(this, 'PUT', `/v1/organizations/${organizationId}`, body);
                         returnData.push({ json: response });
                     }
                     else if (operation === 'delete') {
                         const organizationId = this.getNodeParameter('organizationId', i);
-                        const response = await GenericFunctions_1.mem0ApiRequest.call(this, 'DELETE', `/v1/organizations/${organizationId}/`);
+                        const response = await GenericFunctions_1.mem0ApiRequest.call(this, 'DELETE', `/v1/organizations/${organizationId}`);
                         returnData.push({ json: response });
                     }
                     else {
@@ -1328,12 +1328,12 @@ class Mem0 {
                         const metadata = buildKeyValueFromCollection(additional.metadata);
                         if (metadata)
                             body.metadata = metadata;
-                        const response = await GenericFunctions_1.mem0ApiRequest.call(this, 'POST', '/v1/projects/', body);
+                        const response = await GenericFunctions_1.mem0ApiRequest.call(this, 'POST', '/v1/projects', body);
                         returnData.push({ json: response });
                     }
                     else if (operation === 'get') {
                         const projectId = this.getNodeParameter('projectId', i);
-                        const response = await GenericFunctions_1.mem0ApiRequest.call(this, 'GET', `/v1/projects/${projectId}/`);
+                        const response = await GenericFunctions_1.mem0ApiRequest.call(this, 'GET', `/v1/projects/${projectId}`);
                         returnData.push({ json: response });
                     }
                     else if (operation === 'getAll') {
@@ -1341,7 +1341,7 @@ class Mem0 {
                         const qs = {};
                         if (filters.organizationId)
                             qs.organization_id = filters.organizationId;
-                        const response = await GenericFunctions_1.mem0ApiRequest.call(this, 'GET', '/v1/projects/', {}, qs);
+                        const response = await GenericFunctions_1.mem0ApiRequest.call(this, 'GET', '/v1/projects', {}, qs);
                         if (Array.isArray(response))
                             response.forEach(item => returnData.push({ json: item }));
                         else
@@ -1360,12 +1360,12 @@ class Mem0 {
                         const metadata = buildKeyValueFromCollection(updateFields.metadata);
                         if (metadata)
                             body.metadata = metadata;
-                        const response = await GenericFunctions_1.mem0ApiRequest.call(this, 'PUT', `/v1/projects/${projectId}/`, body);
+                        const response = await GenericFunctions_1.mem0ApiRequest.call(this, 'PUT', `/v1/projects/${projectId}`, body);
                         returnData.push({ json: response });
                     }
                     else if (operation === 'delete') {
                         const projectId = this.getNodeParameter('projectId', i);
-                        const response = await GenericFunctions_1.mem0ApiRequest.call(this, 'DELETE', `/v1/projects/${projectId}/`);
+                        const response = await GenericFunctions_1.mem0ApiRequest.call(this, 'DELETE', `/v1/projects/${projectId}`);
                         returnData.push({ json: response });
                     }
                     else {
@@ -1374,11 +1374,11 @@ class Mem0 {
                 }
                 else if (resource === 'config') {
                     if (operation === 'health') {
-                        const response = await GenericFunctions_1.mem0ApiRequest.call(this, 'GET', '/health');
+                        const response = await GenericFunctions_1.mem0ApiRequest.call(this, 'GET', '/v1/health');
                         returnData.push({ json: response });
                     }
                     else if (operation === 'getConfig') {
-                        const response = await GenericFunctions_1.mem0ApiRequest.call(this, 'GET', '/config');
+                        const response = await GenericFunctions_1.mem0ApiRequest.call(this, 'GET', '/v1/config');
                         returnData.push({ json: response });
                     }
                     else if (operation === 'switch') {
@@ -1386,7 +1386,7 @@ class Mem0 {
                         const model = this.getNodeParameter('configModel', i, '') || undefined;
                         const body = { provider };
                         if (model) body.model = model;
-                        const response = await GenericFunctions_1.mem0ApiRequest.call(this, 'POST', '/config/switch', body);
+                        const response = await GenericFunctions_1.mem0ApiRequest.call(this, 'POST', '/v1/config/switch', body);
                         returnData.push({ json: response });
                     }
                     else if (operation === 'configure') {
@@ -1397,11 +1397,11 @@ class Mem0 {
                         } catch (_) {
                             throw new n8n_workflow_1.NodeOperationError(this.getNode(), 'Config JSON is invalid. Please provide a valid JSON object.');
                         }
-                        const response = await GenericFunctions_1.mem0ApiRequest.call(this, 'POST', '/configure', configObj);
+                        const response = await GenericFunctions_1.mem0ApiRequest.call(this, 'POST', '/v1/configure', configObj);
                         returnData.push({ json: response || { success: true } });
                     }
                     else if (operation === 'reset') {
-                        const response = await GenericFunctions_1.mem0ApiRequest.call(this, 'POST', '/reset', {});
+                        const response = await GenericFunctions_1.mem0ApiRequest.call(this, 'POST', '/v1/reset', {});
                         returnData.push({ json: response || { success: true } });
                     }
                     else {
