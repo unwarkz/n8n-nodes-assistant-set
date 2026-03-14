@@ -86,6 +86,7 @@ class Mem0Memory {
             },
             inputs: [],
             outputs: ['ai_memory'],
+            outputNames: ['Memory'],
             credentials: [
                 {
                     name: 'mem0Api',
@@ -265,29 +266,58 @@ class Mem0Memory {
             },
 
             async loadMemoryVariables(_values) {
+                let runIndex = 0;
+                try {
+                    const { index } = self.addInputData('ai_memory', [[{ json: { action: 'loadMemoryVariables', values: _values } }]]);
+                    runIndex = index;
+                } catch (_) { /* addInputData may not exist in older n8n versions */ }
                 try {
                     const messages = await self._loadMessages(buildMemParams(), contextWindowLength);
-                    return { chat_history: messages };
-                } catch (_) {
+                    const response = { chat_history: messages };
+                    try {
+                        self.addOutputData('ai_memory', runIndex, [[{ json: { action: 'loadMemoryVariables', chatHistory: messages } }]]);
+                    } catch (_) { /* ignore */ }
+                    return response;
+                } catch (e) {
+                    try {
+                        self.addOutputData('ai_memory', runIndex, [[{ json: { action: 'loadMemoryVariables', chatHistory: [] } }]]);
+                    } catch (_) { /* ignore */ }
                     return { chat_history: [] };
                 }
             },
 
             async saveContext(inputValues, outputValues) {
+                let runIndex = 0;
+                try {
+                    const { index } = self.addInputData('ai_memory', [[{ json: { action: 'saveContext', input: inputValues, output: outputValues } }]]);
+                    runIndex = index;
+                } catch (_) { /* addInputData may not exist in older n8n versions */ }
                 try {
                     const messages = [];
                     const userInput = inputValues && (inputValues.input || inputValues.human_input || inputValues.query || inputValues.chatInput);
                     const aiOutput = outputValues && (outputValues.output || outputValues.response || outputValues.text);
                     if (userInput) messages.push({ role: 'user', content: String(userInput) });
                     if (aiOutput) messages.push({ role: 'assistant', content: String(aiOutput) });
-                    if (messages.length === 0) return;
+                    if (messages.length === 0) {
+                        try {
+                            self.addOutputData('ai_memory', runIndex, [[{ json: { action: 'saveContext', skipped: true } }]]);
+                        } catch (_) { /* ignore */ }
+                        return;
+                    }
                     // infer: false preserves raw messages without LLM extraction
                     await GenericFunctions_1.mem0ApiRequest.call(self, 'POST', '/v1/memories', Object.assign({
                         messages,
                         infer: false,
                         metadata: { source: 'agent_interaction' },
                     }, buildMemParams()));
-                } catch (_) { /* silently ignore to not disrupt the agent */ }
+                    try {
+                        self.addOutputData('ai_memory', runIndex, [[{ json: { action: 'saveContext', saved: messages.length } }]]);
+                    } catch (_) { /* ignore */ }
+                } catch (_) {
+                    try {
+                        self.addOutputData('ai_memory', runIndex, [[{ json: { action: 'saveContext', error: 'failed' } }]]);
+                    } catch (_e) { /* ignore */ }
+                }
             },
 
             async clear() {
