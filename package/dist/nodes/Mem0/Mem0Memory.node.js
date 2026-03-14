@@ -37,13 +37,40 @@ let HumanMessage, AIMessage, SystemMessage;
 })();
 
 /**
+ * Resolve the session key from node parameters using the supplied execution context.
+ * Defined as a module-level function so it works correctly when n8n calls
+ * supplyData/execute with an execution context as `this` (not the class instance).
+ *
+ * The session key maps to run_id in Mem0 to represent a specific conversation session.
+ * For "fromInput" mode the function reads runId / sessionId / chatId from the item JSON.
+ */
+function resolveSessionKey(ctx, itemIndex) {
+    const sessionIdType = ctx.getNodeParameter('sessionIdType', itemIndex, 'fromInput');
+    if (sessionIdType === 'customKey') {
+        return String(ctx.getNodeParameter('sessionKey', itemIndex, '') || `session_${ctx.getNode().id}`);
+    }
+    // fromInput: look for common session/run fields in the current item
+    try {
+        const items = ctx.getInputData();
+        const item = (items && (items[itemIndex] || items[0]));
+        const json = item && item.json;
+        if (json) {
+            const key = json.runId || json.run_id || json.sessionId || json.session_id || json.chatId;
+            if (key) return String(key);
+        }
+    } catch (_) { /* ignore */ }
+    return `session_${ctx.getNode().id}`;
+}
+
+/**
  * Mem0 Chat Memory node
  *
  * Stores and retrieves chat conversation history using Mem0 as the backend.
  * Works like the Redis Chat Memory node — connect the "ai_memory" output to
  * an AI Agent node's "Memory" input.
  *
- * Each conversation is scoped by a Session Key (maps to user_id in Mem0).
+ * Each conversation is scoped by a Session Key (maps to run_id in Mem0).
+ * Optionally scope by user_id and agent_id for richer memory organisation.
  */
 class Mem0Memory {
     constructor() {
@@ -105,7 +132,7 @@ class Mem0Memory {
                         {
                             name: 'Take from Previous Node Automatically',
                             value: 'fromInput',
-                            description: 'Reads sessionId / chatId / userId from the incoming node data',
+                            description: 'Reads runId / sessionId / chatId from the incoming node data',
                         },
                         {
                             name: 'Define Below',
@@ -114,7 +141,7 @@ class Mem0Memory {
                         },
                     ],
                     default: 'fromInput',
-                    description: 'How to determine the session identifier used to scope chat history in Mem0',
+                    description: 'How to determine the session identifier (run_id) used to scope chat history in Mem0',
                 },
                 {
                     displayName: 'Session Key',
@@ -124,8 +151,24 @@ class Mem0Memory {
                     displayOptions: {
                         show: { sessionIdType: ['customKey'] },
                     },
-                    description: 'Unique identifier for this conversation session. Maps to user_id in Mem0. Supports expressions, e.g. ={{ $json.message.chat.id }}',
+                    description: 'Unique identifier for this conversation session. Maps to run_id in Mem0. Supports expressions, e.g. ={{ $json.message.chat.id }}',
                     placeholder: '={{ $json.message.chat.id }}',
+                },
+                {
+                    displayName: 'User ID',
+                    name: 'userId',
+                    type: 'string',
+                    default: '',
+                    description: 'Optional user ID to scope memories to a specific user. Supports expressions.',
+                    placeholder: 'user_123',
+                },
+                {
+                    displayName: 'Agent ID',
+                    name: 'agentId',
+                    type: 'string',
+                    default: '',
+                    description: 'Optional agent ID to scope memories to a specific agent. Supports expressions.',
+                    placeholder: 'my_agent',
                 },
                 {
                     displayName: 'Context Window Length',
@@ -140,35 +183,11 @@ class Mem0Memory {
     }
 
     /**
-     * Resolve the session key (maps to user_id in Mem0) from node parameters.
-     * For "fromInput" mode we try to read sessionId / chatId / userId from the
-     * current item's JSON; fall back to the node ID as a stable default.
-     */
-    _resolveSessionKey(itemIndex) {
-        const sessionIdType = this.getNodeParameter('sessionIdType', itemIndex, 'fromInput');
-        if (sessionIdType === 'customKey') {
-            return String(this.getNodeParameter('sessionKey', itemIndex, '') || `session_${this.getNode().id}`);
-        }
-        // fromInput: look for common session fields in the current item
-        try {
-            const items = this.getInputData();
-            const item = (items && (items[itemIndex] || items[0]));
-            const json = item && item.json;
-            if (json) {
-                const key = json.sessionId || json.chatId || json.userId || json.session_id || json.user_id;
-                if (key) return String(key);
-            }
-        } catch (_) { /* ignore */ }
-        return `session_${this.getNode().id}`;
-    }
-
-    /**
      * Fetch stored messages from Mem0 and return them as LangChain BaseMessage instances.
      * Messages are stored with metadata.role so we can reconstruct human/AI types.
      */
-    async _loadMessages(sessionKey, contextWindowLength) {
-        const qs = { user_id: sessionKey };
-        const res = await GenericFunctions_1.mem0ApiRequest.call(this, 'GET', '/v1/memories/', {}, qs);
+    async _loadMessages(memParams, contextWindowLength) {
+        const res = await GenericFunctions_1.mem0ApiRequest.call(this, 'GET', '/v1/memories/', {}, memParams);
         let memories = Array.isArray(res) ? res : (res ? [res] : []);
         // Apply context window (0 = unlimited)
         if (contextWindowLength > 0) {
@@ -190,47 +209,59 @@ class Mem0Memory {
      */
     async supplyData(itemIndex) {
         const self = this;
-        const sessionKey = this._resolveSessionKey(itemIndex);
+        // Use module-level resolveSessionKey to avoid 'this' context issues
+        const sessionKey = resolveSessionKey(this, itemIndex);
+        const userId = this.getNodeParameter('userId', itemIndex, '') || '';
+        const agentId = this.getNodeParameter('agentId', itemIndex, '') || '';
         const contextWindowLength = Number(this.getNodeParameter('contextWindowLength', itemIndex, 10));
+
+        // Build the base params for all Mem0 API calls.
+        // Session key maps to run_id (a specific conversation session).
+        function buildMemParams() {
+            const p = { run_id: sessionKey };
+            if (userId) p.user_id = userId;
+            if (agentId) p.agent_id = agentId;
+            return p;
+        }
 
         const memoryObj = {
             memoryKeys: ['chat_history'],
             chatHistory: {
                 async getMessages() {
                     try {
-                        return await self._loadMessages(sessionKey, contextWindowLength);
+                        return await self._loadMessages(buildMemParams(), contextWindowLength);
                     } catch (_) {
                         return [];
                     }
                 },
                 async addUserMessage(message) {
                     try {
-                        await GenericFunctions_1.mem0ApiRequest.call(self, 'POST', '/v1/memories/', {
+                        await GenericFunctions_1.mem0ApiRequest.call(self, 'POST', '/v1/memories/', Object.assign({
                             messages: [{ role: 'user', content: String(message) }],
-                            user_id: sessionKey,
                             infer: false,
-                        });
+                            metadata: { source: 'agent_interaction' },
+                        }, buildMemParams()));
                     } catch (_) { /* ignore */ }
                 },
                 async addAIChatMessage(message) {
                     try {
-                        await GenericFunctions_1.mem0ApiRequest.call(self, 'POST', '/v1/memories/', {
+                        await GenericFunctions_1.mem0ApiRequest.call(self, 'POST', '/v1/memories/', Object.assign({
                             messages: [{ role: 'assistant', content: String(message) }],
-                            user_id: sessionKey,
                             infer: false,
-                        });
+                            metadata: { source: 'agent_interaction' },
+                        }, buildMemParams()));
                     } catch (_) { /* ignore */ }
                 },
                 async clear() {
                     try {
-                        await GenericFunctions_1.mem0ApiRequest.call(self, 'DELETE', '/v1/memories/', {}, { user_id: sessionKey });
+                        await GenericFunctions_1.mem0ApiRequest.call(self, 'DELETE', '/v1/memories/', {}, buildMemParams());
                     } catch (_) { /* ignore */ }
                 },
             },
 
             async loadMemoryVariables(_values) {
                 try {
-                    const messages = await self._loadMessages(sessionKey, contextWindowLength);
+                    const messages = await self._loadMessages(buildMemParams(), contextWindowLength);
                     return { chat_history: messages };
                 } catch (_) {
                     return { chat_history: [] };
@@ -246,17 +277,17 @@ class Mem0Memory {
                     if (aiOutput) messages.push({ role: 'assistant', content: String(aiOutput) });
                     if (messages.length === 0) return;
                     // infer: false preserves raw messages without LLM extraction
-                    await GenericFunctions_1.mem0ApiRequest.call(self, 'POST', '/v1/memories/', {
+                    await GenericFunctions_1.mem0ApiRequest.call(self, 'POST', '/v1/memories/', Object.assign({
                         messages,
-                        user_id: sessionKey,
                         infer: false,
-                    });
+                        metadata: { source: 'agent_interaction' },
+                    }, buildMemParams()));
                 } catch (_) { /* silently ignore to not disrupt the agent */ }
             },
 
             async clear() {
                 try {
-                    await GenericFunctions_1.mem0ApiRequest.call(self, 'DELETE', '/v1/memories/', {}, { user_id: sessionKey });
+                    await GenericFunctions_1.mem0ApiRequest.call(self, 'DELETE', '/v1/memories/', {}, buildMemParams());
                 } catch (_) { /* ignore */ }
             },
         };
@@ -270,7 +301,7 @@ class Mem0Memory {
         return [items.map((_item, i) => ({
             json: {
                 message: 'Mem0 Chat Memory is ready. Connect the "ai_memory" output to an AI Agent node.',
-                sessionKey: this._resolveSessionKey(i),
+                sessionKey: resolveSessionKey(this, i),
             },
         }))];
     }
