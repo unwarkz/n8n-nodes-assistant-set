@@ -327,11 +327,15 @@ class Mem0AiTools {
                 }) : null,
                 func: async ({ user_id, agent_id, run_id } = {}) => {
                     try {
-                        const qs = Object.assign({}, buildBaseParams());
-                        if (user_id) qs.user_id = user_id;
-                        if (agent_id) qs.agent_id = agent_id;
-                        if (run_id) qs.run_id = run_id;
-                        const result = await GenericFunctions_1.mem0ApiRequest.call(self, 'GET', '/v1/memories', {}, qs);
+                        const effectiveUserId = user_id || userId;
+                        const qs = {};
+                        if (agent_id || agentId) qs.agent_id = agent_id || agentId;
+                        if (run_id || runId) qs.run_id = run_id || runId;
+                        // Use the dedicated /user/{user_id} path when a user ID is available
+                        const endpoint = effectiveUserId
+                            ? `/v1/memories/user/${effectiveUserId}`
+                            : '/v1/memories';
+                        const result = await GenericFunctions_1.mem0ApiRequest.call(self, 'GET', endpoint, {}, qs);
                         return JSON.stringify(result);
                     } catch (err) {
                         return JSON.stringify({ error: err.message || String(err) });

@@ -187,7 +187,12 @@ class Mem0Memory {
      * Messages are stored with metadata.role so we can reconstruct human/AI types.
      */
     async _loadMessages(memParams, contextWindowLength) {
-        const res = await GenericFunctions_1.mem0ApiRequest.call(this, 'GET', '/v1/memories', {}, memParams);
+        // Use the dedicated /user/{user_id} path when user_id is provided to match
+        // the GET /v1/memories/user/{user_id} endpoint. Other params remain as qs.
+        const { user_id, ...otherParams } = memParams;
+        const endpoint = user_id ? `/v1/memories/user/${user_id}` : '/v1/memories';
+        const qs = user_id ? otherParams : memParams;
+        const res = await GenericFunctions_1.mem0ApiRequest.call(this, 'GET', endpoint, {}, qs);
         let memories = Array.isArray(res) ? res : (res ? [res] : []);
         // Apply context window (0 = unlimited)
         if (contextWindowLength > 0) {
