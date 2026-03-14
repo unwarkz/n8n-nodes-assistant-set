@@ -251,6 +251,36 @@ class Mem0AiTools {
 
         const tools = [];
 
+        // Sequential run index incremented with every tool invocation.
+        // Passed to addOutputData so n8n can correlate each call in the
+        // workflow execution view.
+        let toolCallRunIndex = 0;
+
+        /**
+         * Levelled logger backed by n8n's built-in ILogger when available.
+         * Falls back silently so the node works in any n8n version.
+         */
+        function log(level, message, meta) {
+            try {
+                if (self.logger && typeof self.logger[level] === 'function') {
+                    self.logger[level](message, meta);
+                }
+            } catch (_) { /* ignore */ }
+        }
+
+        /**
+         * Emit the tool result as observation data on the ai_tool output so it
+         * appears in the n8n workflow execution view under this node.
+         */
+        function emitObservation(runIndex, data) {
+            try {
+                const json = (data !== null && typeof data === 'object' && !Array.isArray(data))
+                    ? data
+                    : { result: data };
+                self.addOutputData('ai_tool', runIndex, [[{ json }]]);
+            } catch (_) { /* addOutputData may not be available in all n8n versions */ }
+        }
+
         // ── Tool: mem0_search_memory ──────────────────────────────────────────
         if (Array.isArray(enabledTools) && enabledTools.includes('search')) {
             const topKDefault = searchOptions.topK || 10;
@@ -266,6 +296,8 @@ class Mem0AiTools {
                     filters: recOpt('Additional filters as key-value pairs'),
                 }) : null,
                 func: async ({ query, user_id, agent_id, run_id, top_k, filters } = {}) => {
+                    const runIndex = toolCallRunIndex++;
+                    log('debug', '[Mem0] mem0_search_memory called', { query, user_id: user_id || userId, top_k: top_k || topKDefault });
                     try {
                         const body = Object.assign({ query: query || '' }, buildBaseParams());
                         if (user_id) body.user_id = user_id;
@@ -276,9 +308,19 @@ class Mem0AiTools {
                         if (searchOptions.rerank !== undefined) body.rerank = Boolean(searchOptions.rerank);
                         if (filters) body.filters = filters;
                         const result = await GenericFunctions_1.mem0ApiRequest.call(self, 'POST', '/v1/memories/search', body);
+                        const count = Array.isArray(result) ? result.length : undefined;
+                        log('info', '[Mem0] mem0_search_memory succeeded', { query, count });
+                        const observationResult = Array.isArray(result)
+                            ? { memories: result, count }
+                            : (result && typeof result === 'object' ? result : { result });
+                        emitObservation(runIndex, observationResult);
                         return JSON.stringify(result);
                     } catch (err) {
-                        return JSON.stringify({ error: err.message || String(err) });
+                        const errorMsg = err.message || String(err);
+                        log('error', '[Mem0] mem0_search_memory failed', { query, error: errorMsg });
+                        const errObj = { error: errorMsg };
+                        emitObservation(runIndex, errObj);
+                        return JSON.stringify(errObj);
                     }
                 },
             }));
@@ -298,6 +340,8 @@ class Mem0AiTools {
                     metadata: recOpt('Additional metadata tags as key-value pairs'),
                 }) : null,
                 func: async ({ content, role, user_id, agent_id, run_id, metadata } = {}) => {
+                    const runIndex = toolCallRunIndex++;
+                    log('debug', '[Mem0] mem0_add_memory called', { role: role || 'user', user_id: user_id || userId });
                     try {
                         const msgRole = role || 'user';
                         const msgContent = content || '';
@@ -307,9 +351,16 @@ class Mem0AiTools {
                         if (run_id) body.run_id = run_id;
                         if (metadata) body.metadata = metadata;
                         const result = await GenericFunctions_1.mem0ApiRequest.call(self, 'POST', '/v1/memories', body);
+                        log('info', '[Mem0] mem0_add_memory succeeded', { user_id: user_id || userId });
+                        const observationResult = result && typeof result === 'object' ? result : { result };
+                        emitObservation(runIndex, observationResult);
                         return JSON.stringify(result);
                     } catch (err) {
-                        return JSON.stringify({ error: err.message || String(err) });
+                        const errorMsg = err.message || String(err);
+                        log('error', '[Mem0] mem0_add_memory failed', { error: errorMsg });
+                        const errObj = { error: errorMsg };
+                        emitObservation(runIndex, errObj);
+                        return JSON.stringify(errObj);
                     }
                 },
             }));
@@ -326,6 +377,8 @@ class Mem0AiTools {
                     run_id: strOpt('Filter by session/run ID'),
                 }) : null,
                 func: async ({ user_id, agent_id, run_id } = {}) => {
+                    const runIndex = toolCallRunIndex++;
+                    log('debug', '[Mem0] mem0_get_all_memories called', { user_id: user_id || userId });
                     try {
                         const effectiveUserId = user_id || userId;
                         const qs = {};
@@ -336,9 +389,19 @@ class Mem0AiTools {
                             ? `/v1/memories/user/${effectiveUserId}`
                             : '/v1/memories';
                         const result = await GenericFunctions_1.mem0ApiRequest.call(self, 'GET', endpoint, {}, qs);
+                        const count = Array.isArray(result) ? result.length : undefined;
+                        log('info', '[Mem0] mem0_get_all_memories succeeded', { user_id: effectiveUserId, count });
+                        const observationResult = Array.isArray(result)
+                            ? { memories: result, count }
+                            : (result && typeof result === 'object' ? result : { result });
+                        emitObservation(runIndex, observationResult);
                         return JSON.stringify(result);
                     } catch (err) {
-                        return JSON.stringify({ error: err.message || String(err) });
+                        const errorMsg = err.message || String(err);
+                        log('error', '[Mem0] mem0_get_all_memories failed', { error: errorMsg });
+                        const errObj = { error: errorMsg };
+                        emitObservation(runIndex, errObj);
+                        return JSON.stringify(errObj);
                     }
                 },
             }));
@@ -353,12 +416,26 @@ class Mem0AiTools {
                     memory_id: z.string().describe('The unique ID of the memory to delete'),
                 }) : null,
                 func: async ({ memory_id } = {}) => {
+                    const runIndex = toolCallRunIndex++;
+                    log('debug', '[Mem0] mem0_delete_memory called', { memory_id });
                     try {
-                        if (!memory_id) return JSON.stringify({ error: 'memory_id is required' });
+                        if (!memory_id) {
+                            const errObj = { error: 'memory_id is required' };
+                            log('warn', '[Mem0] mem0_delete_memory called without memory_id');
+                            emitObservation(runIndex, errObj);
+                            return JSON.stringify(errObj);
+                        }
                         const result = await GenericFunctions_1.mem0ApiRequest.call(self, 'DELETE', `/v1/memories/${memory_id}`);
-                        return JSON.stringify(result || { message: 'Memory deleted successfully' });
+                        const observationResult = result || { message: 'Memory deleted successfully' };
+                        log('info', '[Mem0] mem0_delete_memory succeeded', { memory_id });
+                        emitObservation(runIndex, observationResult);
+                        return JSON.stringify(observationResult);
                     } catch (err) {
-                        return JSON.stringify({ error: err.message || String(err) });
+                        const errorMsg = err.message || String(err);
+                        log('error', '[Mem0] mem0_delete_memory failed', { memory_id, error: errorMsg });
+                        const errObj = { error: errorMsg };
+                        emitObservation(runIndex, errObj);
+                        return JSON.stringify(errObj);
                     }
                 },
             }));
@@ -373,12 +450,29 @@ class Mem0AiTools {
                     memory_id: z.string().describe('The unique ID of the memory'),
                 }) : null,
                 func: async ({ memory_id } = {}) => {
+                    const runIndex = toolCallRunIndex++;
+                    log('debug', '[Mem0] mem0_get_memory_history called', { memory_id });
                     try {
-                        if (!memory_id) return JSON.stringify({ error: 'memory_id is required' });
+                        if (!memory_id) {
+                            const errObj = { error: 'memory_id is required' };
+                            log('warn', '[Mem0] mem0_get_memory_history called without memory_id');
+                            emitObservation(runIndex, errObj);
+                            return JSON.stringify(errObj);
+                        }
                         const result = await GenericFunctions_1.mem0ApiRequest.call(self, 'GET', `/v1/memories/${memory_id}/history`);
+                        const count = Array.isArray(result) ? result.length : undefined;
+                        log('info', '[Mem0] mem0_get_memory_history succeeded', { memory_id, count });
+                        const observationResult = Array.isArray(result)
+                            ? { history: result, count }
+                            : (result && typeof result === 'object' ? result : { result });
+                        emitObservation(runIndex, observationResult);
                         return JSON.stringify(result);
                     } catch (err) {
-                        return JSON.stringify({ error: err.message || String(err) });
+                        const errorMsg = err.message || String(err);
+                        log('error', '[Mem0] mem0_get_memory_history failed', { memory_id, error: errorMsg });
+                        const errObj = { error: errorMsg };
+                        emitObservation(runIndex, errObj);
+                        return JSON.stringify(errObj);
                     }
                 },
             }));
