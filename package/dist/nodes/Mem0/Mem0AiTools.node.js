@@ -4,10 +4,60 @@ exports.Mem0AiTools = void 0;
 const GenericFunctions_1 = require("./GenericFunctions");
 
 /**
+ * Load DynamicTool from LangChain (available in n8n's runtime environment).
+ * Falls back to a minimal StructuredTool-compatible shim when not resolvable.
+ */
+let DynamicTool;
+(function () {
+    const candidates = ['@langchain/core/tools', 'langchain/tools'];
+    for (const mod of candidates) {
+        try {
+            const exported = require(mod);
+            if (exported && exported.DynamicTool) {
+                DynamicTool = exported.DynamicTool;
+                return;
+            }
+        } catch (_) { /* continue */ }
+    }
+    // Minimal shim: satisfies isStructuredTool() and invoke() contract used by
+    // @langchain/google-genai / @langchain/openai when binding tools to the LLM.
+    let z;
+    try { z = require('zod'); } catch (_) { z = null; }
+
+    DynamicTool = class DynamicToolShim {
+        constructor({ name, description, func }) {
+            this.name = name;
+            this.description = description;
+            this.func = func;
+            this.returnDirect = false;
+            this.verbose = false;
+            this.lc_namespace = ['langchain_core', 'tools', 'dynamic'];
+            this.lc_serializable = true;
+            if (z) {
+                this.schema = z.object({ input: z.string().optional().describe('Tool input') });
+            } else {
+                this.schema = null;
+            }
+        }
+        async invoke(input) {
+            const inputStr = typeof input === 'string' ? input
+                : (input && typeof input.input === 'string' ? input.input : JSON.stringify(input));
+            return this.func(inputStr);
+        }
+        async call(arg, _configArg) {
+            const inputStr = typeof arg === 'string' ? arg
+                : (arg && typeof arg.input === 'string' ? arg.input : JSON.stringify(arg));
+            return this.func(inputStr);
+        }
+        _type() { return 'dynamic'; }
+    };
+})();
+
+/**
  * Mem0 AI Tools node
  *
- * Provides a set of DynamicTool-compatible tool objects that an n8n AI Agent
- * can call to search, add, retrieve and delete memories stored in Mem0.
+ * Provides DynamicTool instances that an n8n AI Agent can call to search,
+ * add, retrieve and delete memories stored in Mem0.
  *
  * Connect the "ai_tool" output to an AI Agent node's "Tools" input.
  */
@@ -163,7 +213,9 @@ class Mem0AiTools {
 
     /**
      * supplyData is called by the n8n AI Agent to obtain the tool objects.
-     * Returns an array of DynamicTool-compatible objects.
+     * Returns an array of DynamicTool instances so LangChain can properly
+     * convert them to the LLM-specific function-calling format (Gemini
+     * functionDeclarations, OpenAI functions, etc.).
      */
     async supplyData(itemIndex) {
         const self = this;
@@ -173,30 +225,19 @@ class Mem0AiTools {
         const enabledTools = this.getNodeParameter('enabledTools', itemIndex, ['search', 'add', 'getAll']);
         const searchOptions = this.getNodeParameter('searchOptions', itemIndex, {}) || {};
 
-        /**
-         * Build the base filter params shared by all memory operations.
-         * If user provides a JSON string like {"user_id":"alice"}, we merge those.
-         */
-        function buildBaseParams(extraJson) {
+        function buildBaseParams() {
             const params = {};
             if (userId) params.user_id = userId;
             if (agentId) params.agent_id = agentId;
             if (runId) params.run_id = runId;
-            if (extraJson) {
-                try {
-                    const extra = typeof extraJson === 'string' ? JSON.parse(extraJson) : extraJson;
-                    Object.assign(params, extra);
-                }
-                catch { }
-            }
             return params;
         }
 
         const tools = [];
 
-        // ── Tool: search_memory ───────────────────────────────────────────────
+        // ── Tool: mem0_search_memory ──────────────────────────────────────────
         if (Array.isArray(enabledTools) && enabledTools.includes('search')) {
-            tools.push({
+            tools.push(new DynamicTool({
                 name: 'mem0_search_memory',
                 description: `Search Mem0 memories using semantic similarity.
 Input: JSON string with fields:
@@ -208,16 +249,10 @@ Returns: array of relevant memory objects.`,
                 func: async (input) => {
                     try {
                         let params;
-                        try {
-                            params = typeof input === 'string' ? JSON.parse(input) : input;
-                        }
-                        catch {
-                            params = { query: String(input) };
-                        }
+                        try { params = typeof input === 'string' ? JSON.parse(input) : input; }
+                        catch (_) { params = { query: String(input) }; }
                         const query = params.query || params.q || String(input);
-                        const body = { query };
-                        const base = buildBaseParams(null);
-                        Object.assign(body, base);
+                        const body = Object.assign({ query }, buildBaseParams());
                         if (params.user_id) body.user_id = params.user_id;
                         if (params.agent_id) body.agent_id = params.agent_id;
                         if (params.run_id) body.run_id = params.run_id;
@@ -227,24 +262,21 @@ Returns: array of relevant memory objects.`,
                         if (params.filters) {
                             try {
                                 body.filters = typeof params.filters === 'string'
-                                    ? JSON.parse(params.filters)
-                                    : params.filters;
-                            }
-                            catch { }
+                                    ? JSON.parse(params.filters) : params.filters;
+                            } catch (_) { }
                         }
                         const result = await GenericFunctions_1.mem0ApiRequest.call(self, 'POST', '/v1/memories/search/', body);
                         return JSON.stringify(result);
-                    }
-                    catch (err) {
+                    } catch (err) {
                         return JSON.stringify({ error: err.message || String(err) });
                     }
                 },
-            });
+            }));
         }
 
-        // ── Tool: add_memory ─────────────────────────────────────────────────
+        // ── Tool: mem0_add_memory ─────────────────────────────────────────────
         if (Array.isArray(enabledTools) && enabledTools.includes('add')) {
-            tools.push({
+            tools.push(new DynamicTool({
                 name: 'mem0_add_memory',
                 description: `Save a new memory or conversation turn to Mem0.
 Input: JSON string with fields:
@@ -256,43 +288,32 @@ Returns: saved memory object.`,
                 func: async (input) => {
                     try {
                         let params;
-                        try {
-                            params = typeof input === 'string' ? JSON.parse(input) : input;
-                        }
-                        catch {
-                            params = { content: String(input) };
-                        }
+                        try { params = typeof input === 'string' ? JSON.parse(input) : input; }
+                        catch (_) { params = { content: String(input) }; }
                         const content = params.content || params.text || params.memory || String(input);
                         const role = params.role || 'user';
-                        const body = {
-                            messages: [{ role, content }],
-                        };
-                        const base = buildBaseParams(null);
-                        Object.assign(body, base);
+                        const body = Object.assign({ messages: [{ role, content }] }, buildBaseParams());
                         if (params.user_id) body.user_id = params.user_id;
                         if (params.agent_id) body.agent_id = params.agent_id;
                         if (params.run_id) body.run_id = params.run_id;
                         if (params.metadata) {
                             try {
                                 body.metadata = typeof params.metadata === 'string'
-                                    ? JSON.parse(params.metadata)
-                                    : params.metadata;
-                            }
-                            catch { }
+                                    ? JSON.parse(params.metadata) : params.metadata;
+                            } catch (_) { }
                         }
                         const result = await GenericFunctions_1.mem0ApiRequest.call(self, 'POST', '/v1/memories/', body);
                         return JSON.stringify(result);
-                    }
-                    catch (err) {
+                    } catch (err) {
                         return JSON.stringify({ error: err.message || String(err) });
                     }
                 },
-            });
+            }));
         }
 
-        // ── Tool: get_all_memories ────────────────────────────────────────────
+        // ── Tool: mem0_get_all_memories ───────────────────────────────────────
         if (Array.isArray(enabledTools) && enabledTools.includes('getAll')) {
-            tools.push({
+            tools.push(new DynamicTool({
                 name: 'mem0_get_all_memories',
                 description: `Retrieve all stored memories for a user from Mem0.
 Input: JSON string with optional fields:
@@ -304,28 +325,25 @@ Returns: array of all memory objects for the specified scope.`,
                     try {
                         let params = {};
                         if (input) {
-                            try {
-                                params = typeof input === 'string' ? JSON.parse(input) : input;
-                            }
-                            catch { }
+                            try { params = typeof input === 'string' ? JSON.parse(input) : input; }
+                            catch (_) { }
                         }
-                        const qs = Object.assign({}, buildBaseParams(null));
+                        const qs = Object.assign({}, buildBaseParams());
                         if (params.user_id) qs.user_id = params.user_id;
                         if (params.agent_id) qs.agent_id = params.agent_id;
                         if (params.run_id) qs.run_id = params.run_id;
                         const result = await GenericFunctions_1.mem0ApiRequest.call(self, 'GET', '/v1/memories/', {}, qs);
                         return JSON.stringify(result);
-                    }
-                    catch (err) {
+                    } catch (err) {
                         return JSON.stringify({ error: err.message || String(err) });
                     }
                 },
-            });
+            }));
         }
 
-        // ── Tool: delete_memory ───────────────────────────────────────────────
+        // ── Tool: mem0_delete_memory ──────────────────────────────────────────
         if (Array.isArray(enabledTools) && enabledTools.includes('delete')) {
-            tools.push({
+            tools.push(new DynamicTool({
                 name: 'mem0_delete_memory',
                 description: `Delete a specific memory from Mem0 by its ID.
 Input: JSON string with fields:
@@ -334,27 +352,22 @@ Returns: confirmation message.`,
                 func: async (input) => {
                     try {
                         let params;
-                        try {
-                            params = typeof input === 'string' ? JSON.parse(input) : input;
-                        }
-                        catch {
-                            params = { memory_id: String(input) };
-                        }
+                        try { params = typeof input === 'string' ? JSON.parse(input) : input; }
+                        catch (_) { params = { memory_id: String(input) }; }
                         const memoryId = params.memory_id || params.id || String(input);
                         if (!memoryId) return JSON.stringify({ error: 'memory_id is required' });
                         const result = await GenericFunctions_1.mem0ApiRequest.call(self, 'DELETE', `/v1/memories/${memoryId}/`);
                         return JSON.stringify(result || { message: 'Memory deleted successfully' });
-                    }
-                    catch (err) {
+                    } catch (err) {
                         return JSON.stringify({ error: err.message || String(err) });
                     }
                 },
-            });
+            }));
         }
 
-        // ── Tool: get_memory_history ──────────────────────────────────────────
+        // ── Tool: mem0_get_memory_history ─────────────────────────────────────
         if (Array.isArray(enabledTools) && enabledTools.includes('history')) {
-            tools.push({
+            tools.push(new DynamicTool({
                 name: 'mem0_get_memory_history',
                 description: `Get the change history of a specific memory from Mem0.
 Input: JSON string with fields:
@@ -363,22 +376,17 @@ Returns: array of history entries showing how the memory changed over time.`,
                 func: async (input) => {
                     try {
                         let params;
-                        try {
-                            params = typeof input === 'string' ? JSON.parse(input) : input;
-                        }
-                        catch {
-                            params = { memory_id: String(input) };
-                        }
+                        try { params = typeof input === 'string' ? JSON.parse(input) : input; }
+                        catch (_) { params = { memory_id: String(input) }; }
                         const memoryId = params.memory_id || params.id || String(input);
                         if (!memoryId) return JSON.stringify({ error: 'memory_id is required' });
                         const result = await GenericFunctions_1.mem0ApiRequest.call(self, 'GET', `/v1/memories/${memoryId}/history/`);
                         return JSON.stringify(result);
-                    }
-                    catch (err) {
+                    } catch (err) {
                         return JSON.stringify({ error: err.message || String(err) });
                     }
                 },
-            });
+            }));
         }
 
         return {

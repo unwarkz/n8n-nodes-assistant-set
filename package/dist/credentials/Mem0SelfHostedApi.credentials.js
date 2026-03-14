@@ -28,7 +28,7 @@ class Mem0SelfHostedApi {
             type: 'generic',
             properties: {
                 headers: {
-                    'Authorization': '={{$credentials.apiKey ? "Token " + $credentials.apiKey : ""}}',
+                    'Authorization': '={{$credentials.apiKey ? "Bearer " + $credentials.apiKey : ""}}',
                 },
             },
         };
