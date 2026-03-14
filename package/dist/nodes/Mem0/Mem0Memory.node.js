@@ -187,7 +187,7 @@ class Mem0Memory {
      * Messages are stored with metadata.role so we can reconstruct human/AI types.
      */
     async _loadMessages(memParams, contextWindowLength) {
-        const res = await GenericFunctions_1.mem0ApiRequest.call(this, 'GET', '/v1/memories/', {}, memParams);
+        const res = await GenericFunctions_1.mem0ApiRequest.call(this, 'GET', '/v1/memories', {}, memParams);
         let memories = Array.isArray(res) ? res : (res ? [res] : []);
         // Apply context window (0 = unlimited)
         if (contextWindowLength > 0) {
@@ -236,7 +236,7 @@ class Mem0Memory {
                 },
                 async addUserMessage(message) {
                     try {
-                        await GenericFunctions_1.mem0ApiRequest.call(self, 'POST', '/v1/memories/', Object.assign({
+                        await GenericFunctions_1.mem0ApiRequest.call(self, 'POST', '/v1/memories', Object.assign({
                             messages: [{ role: 'user', content: String(message) }],
                             infer: false,
                             metadata: { source: 'agent_interaction' },
@@ -245,7 +245,7 @@ class Mem0Memory {
                 },
                 async addAIChatMessage(message) {
                     try {
-                        await GenericFunctions_1.mem0ApiRequest.call(self, 'POST', '/v1/memories/', Object.assign({
+                        await GenericFunctions_1.mem0ApiRequest.call(self, 'POST', '/v1/memories', Object.assign({
                             messages: [{ role: 'assistant', content: String(message) }],
                             infer: false,
                             metadata: { source: 'agent_interaction' },
@@ -254,7 +254,7 @@ class Mem0Memory {
                 },
                 async clear() {
                     try {
-                        await GenericFunctions_1.mem0ApiRequest.call(self, 'DELETE', '/v1/memories/', {}, buildMemParams());
+                        await GenericFunctions_1.mem0ApiRequest.call(self, 'DELETE', '/v1/memories', {}, buildMemParams());
                     } catch (_) { /* ignore */ }
                 },
             },
@@ -277,7 +277,7 @@ class Mem0Memory {
                     if (aiOutput) messages.push({ role: 'assistant', content: String(aiOutput) });
                     if (messages.length === 0) return;
                     // infer: false preserves raw messages without LLM extraction
-                    await GenericFunctions_1.mem0ApiRequest.call(self, 'POST', '/v1/memories/', Object.assign({
+                    await GenericFunctions_1.mem0ApiRequest.call(self, 'POST', '/v1/memories', Object.assign({
                         messages,
                         infer: false,
                         metadata: { source: 'agent_interaction' },
@@ -287,7 +287,7 @@ class Mem0Memory {
 
             async clear() {
                 try {
-                    await GenericFunctions_1.mem0ApiRequest.call(self, 'DELETE', '/v1/memories/', {}, buildMemParams());
+                    await GenericFunctions_1.mem0ApiRequest.call(self, 'DELETE', '/v1/memories', {}, buildMemParams());
                 } catch (_) { /* ignore */ }
             },
         };

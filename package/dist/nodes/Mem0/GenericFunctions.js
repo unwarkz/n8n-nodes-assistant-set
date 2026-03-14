@@ -5,20 +5,17 @@ exports.translateEndpoint = translateEndpoint;
 const n8n_workflow_1 = require("n8n-workflow");
 /**
  * Translates API endpoints for self-hosted instances.
- * The self-hosted app.py uses /search instead of /v1/memories/search/
- * and does not support v2 search endpoints.
+ * Self-hosted instances expose routes without the /v1 version prefix,
+ * so /v1/memories -> /memories, etc.
+ * Trailing slashes are always removed to avoid 301 redirects.
  */
 function translateEndpoint(endpoint, authenticationType) {
-    if (authenticationType !== 'selfHosted') return endpoint;
-    // Self-hosted: /v1/memories/search/ -> /search
-    if (endpoint === '/v1/memories/search/' || endpoint === '/v1/memories/search') {
-        return '/search';
-    }
-    // Self-hosted: /v2/memories/search/ -> /search (no v2 endpoint in self-hosted)
-    if (endpoint === '/v2/memories/search/' || endpoint === '/v2/memories/search') {
-        return '/search';
-    }
-    return endpoint;
+    // Always remove trailing slash to avoid redirect issues
+    let ep = endpoint.replace(/\/$/, '');
+    if (authenticationType !== 'selfHosted') return ep;
+    // Self-hosted: strip /v1 version prefix (self-hosted runs without versioned prefix)
+    ep = ep.replace(/^\/v[0-9]+\//, '/');
+    return ep;
 }
 async function mem0ApiRequest(method, endpoint, body = {}, qs = {}) {
     // Resolve authentication type using the unified 'authType' parameter name

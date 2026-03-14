@@ -179,6 +179,14 @@ class Mem0AiTools {
                     description: 'Select which tools to expose to the AI Agent',
                 },
                 {
+                    displayName: 'Tool Description',
+                    name: 'toolDescription',
+                    type: 'string',
+                    default: 'Interact with Mem0 memory storage: search, add, retrieve, and delete memories for AI agents',
+                    description: 'Describe the tool to help the AI agent understand when and how to use it',
+                    typeOptions: { rows: 3 },
+                },
+                {
                     displayName: 'Search Options',
                     name: 'searchOptions',
                     type: 'collection',
@@ -267,7 +275,7 @@ class Mem0AiTools {
                         else if (topKDefault) body.top_k = Number(topKDefault);
                         if (searchOptions.rerank !== undefined) body.rerank = Boolean(searchOptions.rerank);
                         if (filters) body.filters = filters;
-                        const result = await GenericFunctions_1.mem0ApiRequest.call(self, 'POST', '/v1/memories/search/', body);
+                        const result = await GenericFunctions_1.mem0ApiRequest.call(self, 'POST', '/v1/memories/search', body);
                         return JSON.stringify(result);
                     } catch (err) {
                         return JSON.stringify({ error: err.message || String(err) });
@@ -298,7 +306,7 @@ class Mem0AiTools {
                         if (agent_id) body.agent_id = agent_id;
                         if (run_id) body.run_id = run_id;
                         if (metadata) body.metadata = metadata;
-                        const result = await GenericFunctions_1.mem0ApiRequest.call(self, 'POST', '/v1/memories/', body);
+                        const result = await GenericFunctions_1.mem0ApiRequest.call(self, 'POST', '/v1/memories', body);
                         return JSON.stringify(result);
                     } catch (err) {
                         return JSON.stringify({ error: err.message || String(err) });
@@ -323,7 +331,7 @@ class Mem0AiTools {
                         if (user_id) qs.user_id = user_id;
                         if (agent_id) qs.agent_id = agent_id;
                         if (run_id) qs.run_id = run_id;
-                        const result = await GenericFunctions_1.mem0ApiRequest.call(self, 'GET', '/v1/memories/', {}, qs);
+                        const result = await GenericFunctions_1.mem0ApiRequest.call(self, 'GET', '/v1/memories', {}, qs);
                         return JSON.stringify(result);
                     } catch (err) {
                         return JSON.stringify({ error: err.message || String(err) });
@@ -343,7 +351,7 @@ class Mem0AiTools {
                 func: async ({ memory_id } = {}) => {
                     try {
                         if (!memory_id) return JSON.stringify({ error: 'memory_id is required' });
-                        const result = await GenericFunctions_1.mem0ApiRequest.call(self, 'DELETE', `/v1/memories/${memory_id}/`);
+                        const result = await GenericFunctions_1.mem0ApiRequest.call(self, 'DELETE', `/v1/memories/${memory_id}`);
                         return JSON.stringify(result || { message: 'Memory deleted successfully' });
                     } catch (err) {
                         return JSON.stringify({ error: err.message || String(err) });
@@ -363,7 +371,7 @@ class Mem0AiTools {
                 func: async ({ memory_id } = {}) => {
                     try {
                         if (!memory_id) return JSON.stringify({ error: 'memory_id is required' });
-                        const result = await GenericFunctions_1.mem0ApiRequest.call(self, 'GET', `/v1/memories/${memory_id}/history/`);
+                        const result = await GenericFunctions_1.mem0ApiRequest.call(self, 'GET', `/v1/memories/${memory_id}/history`);
                         return JSON.stringify(result);
                     } catch (err) {
                         return JSON.stringify({ error: err.message || String(err) });
