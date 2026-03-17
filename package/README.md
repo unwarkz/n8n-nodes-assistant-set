@@ -41,6 +41,44 @@ Restart n8n to load the nodes.
 
 ---
 
+32 AI-agent-ready tools for the n8n AI Agent node:
+
+| Tool | Description |
+|------|-------------|
+| `telegram_send_message` | Send text messages with formatting |
+| `telegram_send_photo` | Send photos (file_id, URL, or base64) |
+| `telegram_send_document` | Send documents/files (base64 compatible with Gotenberg output) |
+| `telegram_send_video` | Send videos |
+| `telegram_send_audio` | Send audio files |
+| `telegram_send_voice` | Send voice messages |
+| `telegram_send_location` | Send GPS locations |
+| `telegram_send_contact` | Send contact cards |
+| `telegram_send_poll` | Create polls |
+| `telegram_forward_message` | Forward messages between chats |
+| `telegram_edit_message` | Edit sent messages |
+| `telegram_delete_message` | Delete messages |
+| `telegram_get_file` | Download files (returns base64 for cross-tool use) |
+| `telegram_send_chat_action` | Show typing/uploading indicators |
+| `telegram_get_chat` | Get chat information |
+| `telegram_send_sticker` | Send stickers |
+| `telegram_send_media_group` | Send photo/document albums |
+| `telegram_answer_inline_query` | Answer inline queries |
+| `telegram_pin_message` | Pin messages |
+| `telegram_unpin_message` | Unpin messages |
+| `telegram_send_invoice` | Send payment invoices |
+| `telegram_get_me` | Get bot info |
+| `telegram_set_webhook` | Configure webhook |
+| `telegram_delete_webhook` | Remove webhook |
+| `gotenberg_url_to_pdf` | Convert a public URL to a PDF |
+| `gotenberg_html_to_pdf` | Convert an HTML string to PDF |
+| `gotenberg_url_screenshot` | Take a screenshot of a URL |
+| `gotenberg_libreoffice_convert` | Convert an office document (base64) to PDF |
+| `gotenberg_merge_pdfs` | Merge multiple base64 PDFs into one |
+| `gotenberg_split_pdf` | Split a base64 PDF into parts |
+| `gotenberg_flatten_pdf` | Flatten a base64 PDF |
+| `gotenberg_read_pdf_metadata` | Read metadata from a base64 PDF |
+
+
 ## Node Reference
 
 ### Mem0 (CRUD Node)
@@ -152,9 +190,9 @@ Each tool accepts a JSON string input and returns a JSON string output that the 
 
 ## Self-Hosted API Compatibility
 
-This package is designed to work with the [arti2 mem0-service](https://github.com/unwarkz/arti2/blob/main/mem0-service/app.py), which exposes a FastAPI-based REST API compatible with the official Mem0 REST API. Key differences handled automatically:
+This package is designed to work with the self-hosted Mem0 REST API. Key differences handled automatically:
 
-| Endpoint | Cloud (api.mem0.ai) | Self-Hosted (arti2) |
+| Endpoint | Cloud (api.mem0.ai) | Self-Hosted  |
 |----------|--------------------|--------------------|
 | Semantic search | `POST /v1/memories/search/` | `POST /search` |
 | V2 / advanced search | `POST /v2/memories/search/` | `POST /search` |
@@ -195,6 +233,104 @@ The node automatically translates endpoints when **Self-Hosted** authentication 
 5. The agent can now call `mem0_search_memory`, `mem0_add_memory`, etc. autonomously.
 
 ---
+### Telegram Bot Node
+Full CRUD node covering the complete [Telegram Bot API](https://core.telegram.org/bots/api):
+
+- **Messages**: sendMessage, forwardMessage, copyMessage, sendPhoto, sendAudio, sendDocument, sendVideo, sendAnimation, sendVoice, sendVideoNote, sendMediaGroup, sendLocation, sendVenue, sendContact, sendPoll, sendDice, sendChatAction, editMessageText, editMessageCaption, editMessageMedia, editMessageReplyMarkup, editMessageLiveLocation, stopMessageLiveLocation, stopPoll, deleteMessage, deleteMessages
+- **Chat Management**: getChat, getChatAdministrators, getChatMemberCount, getChatMember, banChatMember, unbanChatMember, restrictChatMember, promoteChatMember, setChatAdministratorCustomTitle, setChatPermissions, exportChatInviteLink, createChatInviteLink, editChatInviteLink, revokeChatInviteLink, approveChatJoinRequest, declineChatJoinRequest, setChatPhoto, deleteChatPhoto, setChatTitle, setChatDescription, pinChatMessage, unpinChatMessage, unpinAllChatMessages, leaveChat, setChatMenuButton, getChatMenuButton, setChatStickerSet, deleteChatStickerSet
+- **Bot Info**: getMe, logOut, close, getMyCommands, setMyCommands, deleteMyCommands, getMyName, setMyName, getMyDescription, setMyDescription, getMyShortDescription, setMyShortDescription
+- **Webhooks**: setWebhook, deleteWebhook, getWebhookInfo
+- **Files**: getFile (download with binary data support)
+- **Stickers**: sendSticker, getStickerSet, getCustomEmojiStickers, uploadStickerFile, createNewStickerSet, addStickerToSet, setStickerPositionInSet, deleteStickerFromSet, deleteStickerSet, setStickerSetThumbnail
+- **Inline**: answerInlineQuery, answerWebAppQuery
+- **Payments**: sendInvoice, createInvoiceLink, answerShippingQuery, answerPreCheckoutQuery
+- **Forum Topics**: createForumTopic, editForumTopic, closeForumTopic, reopenForumTopic, deleteForumTopic, unpinAllForumTopicMessages, editGeneralForumTopic, closeGeneralForumTopic, reopenGeneralForumTopic, hideGeneralForumTopic, unhideGeneralForumTopic
+- **Games**: sendGame, setGameScore, getGameHighScores
+- **Updates**: getUpdates
+
+## Cross-Tool Data Interop
+
+The AI Tools node uses a standardized data format compatible with other tool nodes (e.g., Gotenberg):
+
+```json
+{
+  "success": true,
+  "filename": "document.pdf",
+  "mimeType": "application/pdf",
+  "sizeKb": 142,
+  "base64": "JVBERi0xLjQ..."
+}
+```
+
+**Example workflows with AI Agent:**
+- Download document from Telegram → Convert with Gotenberg → Send back to Telegram
+- Generate PDF with Gotenberg → Send to Telegram chat
+- Receive photo in Telegram → Process → Reply with result
+
+### Regular Node (Gotenberg)
+
+Convert and manipulate PDFs from n8n workflows:
+
+**Chromium Engine**
+- 🌐 **URL to PDF** — Render any public URL as a PDF using headless Chromium
+- 📄 **HTML to PDF** — Convert binary HTML documents to PDF
+- 📸 **URL to Screenshot** — Take PNG/JPEG/WebP screenshots of any URL
+- 🖼 **HTML to Screenshot** — Take screenshots of HTML binary files
+
+**LibreOffice Engine**
+- 📝 **Convert to PDF** — Convert Word, Excel, PowerPoint, ODT, ODS, ODP, CSV and more to PDF
+
+**PDF Engines**
+- 🔀 **Merge PDFs** — Combine multiple PDFs into a single file (ordered by filename)
+- ✂️ **Split PDF** — Split a PDF by equal intervals or custom page ranges
+- 🔄 **Convert PDF** — Convert to PDF/A formats (PDF/A-1a, PDF/A-2b, PDF/A-3b)
+- 📐 **Flatten PDF** — Flatten annotations and interactive form fields
+- 🔍 **Read Metadata** — Read PDF metadata properties (Author, Title, etc.) as JSON
+- ✏️ **Write Metadata** — Write custom metadata properties into a PDF
+
+## Prerequisites
+
+1. A running [Gotenberg](https://gotenberg.dev/docs/getting-started/installation) instance:
+   ```bash
+   docker run --rm -p 3000:3000 gotenberg/gotenberg:8
+   ```
+
+2. n8n version ≥ 1.0.0
+
+## Configuration
+
+Create a **Gotenberg API** credential with:
+- **Base URL**: URL of your Gotenberg instance (default: `http://localhost:3000`)
+- **Username** / **Password**: Optional HTTP Basic Auth credentials (if Gotenberg is configured with `--api-basic-auth-username` / `--api-basic-auth-password`)
+
+## Usage Examples
+
+### Convert a URL to PDF
+
+1. Add a **Gotenberg** node
+2. Set Resource: **Chromium**, Operation: **URL to PDF**
+3. Enter the URL
+4. Optionally configure paper size, margins, landscape, etc.
+5. The output binary property (`data`) will contain the PDF
+
+### Convert a Word document to PDF
+
+1. Read the .docx file (e.g., using a **Read Binary File** node)
+2. Add a **Gotenberg** node
+3. Set Resource: **LibreOffice**, Operation: **Convert to PDF**
+4. Set Binary Property to match the property name from the previous node
+5. The output will be the converted PDF
+
+### Use with AI Agent
+
+1. Add a **Gotenberg AI Tools** node
+2. Select which tools to enable
+3. Connect the **Tool** output to an AI Agent node's **Tools** input
+4. The AI can now generate PDFs, take screenshots, and process documents
+
+
+
+
 
 ## License
 MIT. Do not commit sensitive information (API keys, personal data) to your workflows or to the npm registry.
