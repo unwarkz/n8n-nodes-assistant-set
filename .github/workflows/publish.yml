@@ -1,7 +1,17 @@
-name: Publish to npm
+name: Publish Assistant Set to npm
 
 on:
   workflow_dispatch:
+    inputs:
+      version_bump:
+        description: 'Version bump type'
+        required: true
+        default: 'patch'
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
 
 jobs:
   publish:
@@ -20,14 +30,29 @@ jobs:
           node-version: '18'
           registry-url: 'https://registry.npmjs.org'
 
-      - name: Bump patch version
+      - name: Validate node syntax
+        run: |
+          node --check dist/credentials/Mem0Api.credentials.js
+          node --check dist/credentials/Mem0SelfHostedApi.credentials.js
+          node --check dist/credentials/GotenbergApi.credentials.js
+          node --check dist/credentials/TelegramBotApi.credentials.js
+          node --check dist/nodes/Mem0/Mem0.node.js
+          node --check dist/nodes/Mem0/Mem0Memory.node.js
+          node --check dist/nodes/Mem0/Mem0AiTools.node.js
+          node --check dist/nodes/gotenberg/Gotenberg.node.js
+          node --check dist/nodes/gotenberg/GotenbergAiTools.node.js
+          node --check dist/nodes/telegram/TelegramBot.node.js
+          node --check dist/nodes/telegram/TelegramBotAiTools.node.js
+          echo "✅ All files pass syntax check"
+
+      - name: Bump version
         working-directory: .
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          npm version patch --no-git-tag-version --prefix package
+          npm version ${{ github.event.inputs.version_bump }} --no-git-tag-version --prefix package
           git add package/package.json package/package-lock.json
-          git commit -m "chore: bump version [skip ci]"
+          git commit -m "chore: bump assistant-set version [${{ github.event.inputs.version_bump }}] [skip ci]"
           git push --force-with-lease
 
       - name: Publish to npm

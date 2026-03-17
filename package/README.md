@@ -1,28 +1,35 @@
-# @unwarkz/n8n-nodes-mem0
+# @unwarkz/n8n-nodes-assistant-set
 
-[![npm version](https://img.shields.io/npm/v/@unwarkz/n8n-nodes-mem0.svg)](https://www.npmjs.com/package/@unwarkz/n8n-nodes-mem0)
+[![npm version](https://img.shields.io/npm/v/@unwarkz/n8n-nodes-assistant-set.svg)](https://www.npmjs.com/package/@unwarkz/n8n-nodes-assistant-set)
 
 ## Introduction
 
-Mem0 is an intelligent memory layer for AI agents and applications. This package delivers custom nodes for n8n that let you create, search, update, and connect persistent memories (including semantic and hybrid modes) directly to n8n workflows and agents — both via the Mem0 cloud service and self-hosted instances (including the [arti2 mem0-service](https://github.com/unwarkz/arti2)).
+Full assistant node set for [n8n](https://n8n.io/) — includes **Mem0** intelligent memory, **Gotenberg** PDF conversion, and **Telegram Bot** API nodes (both regular and AI Agent tool variants).
+
+Each component is also available as a standalone package:
+- [@unwarkz/n8n-nodes-mem0](https://www.npmjs.com/package/@unwarkz/n8n-nodes-mem0)
+- [@unwarkz/n8n-nodes-gotenberg-pdf](https://www.npmjs.com/package/@unwarkz/n8n-nodes-gotenberg-pdf)
+- [@unwarkz/n8n-nodes-telegram-bot](https://www.npmjs.com/package/@unwarkz/n8n-nodes-telegram-bot)
 
 ## Installation
 
 ### Via Community Nodes panel (recommended)
 1. Go to **Settings > Community Nodes** and click **Install**.
-2. Enter `@unwarkz/n8n-nodes-mem0`.
+2. Enter `@unwarkz/n8n-nodes-assistant-set`.
 3. Confirm and restart n8n.
 
 ### Manual installation
 ```bash
 cd ~/.n8n/nodes
-npm install @unwarkz/n8n-nodes-mem0
+npm install @unwarkz/n8n-nodes-assistant-set
 ```
 Restart n8n to load the nodes.
 
 ### Credential setup
 - **Mem0 Cloud (api.mem0.ai)**: generate a key at *Dashboard > API Keys* and register it under **Credentials > Mem0 API**.
 - **Mem0 Self-Hosted**: provide the instance URL and optional API key under **Mem0 Self-Hosted API**.
+- **Gotenberg**: provide the base URL of your Gotenberg instance under **Credentials > Gotenberg API**.
+- **Telegram Bot**: create a bot via [@BotFather](https://t.me/BotFather) and register the token under **Credentials > Telegram Bot API**.
 
 ## Included Nodes
 

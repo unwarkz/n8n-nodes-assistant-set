@@ -1,7 +1,7 @@
 {
-  "name": "@unwarkz/n8n-nodes-mem0",
-  "version": "1.3.14",
-  "description": "N8N community node for Mem0 - intelligent memory layer for AI applications",
+  "name": "@unwarkz/n8n-nodes-assistant-set",
+  "version": "1.0.0",
+  "description": "N8N community node package — full assistant set: Mem0 memory, Gotenberg PDF, Telegram Bot (regular + AI tools)",
   "license": "MIT",
   "homepage": "https://github.com/unwarkz/n8n-nodes-mem0-api-server#readme",
   "author": {
@@ -31,26 +31,32 @@
     "credentials": [
       "dist/credentials/Mem0Api.credentials.js",
       "dist/credentials/Mem0SelfHostedApi.credentials.js",
-      "dist/credentials/GotenbergApi.credentials.js"
+      "dist/credentials/GotenbergApi.credentials.js",
+      "dist/credentials/TelegramBotApi.credentials.js"
     ],
     "nodes": [
       "dist/nodes/Mem0/Mem0.node.js",
       "dist/nodes/Mem0/Mem0Memory.node.js",
       "dist/nodes/Mem0/Mem0AiTools.node.js",
       "dist/nodes/gotenberg/Gotenberg.node.js",
-      "dist/nodes/gotenberg/GotenbergAiTools.node.js"
+      "dist/nodes/gotenberg/GotenbergAiTools.node.js",
+      "dist/nodes/telegram/TelegramBot.node.js",
+      "dist/nodes/telegram/TelegramBotAiTools.node.js"
     ]
   },
   "keywords": [
     "n8n-community-node-package",
     "n8n",
+    "assistant",
     "mem0",
     "memory",
     "ai",
     "llm",
-    "long-term-memory",
-    "semantic-search",
-    "vector-database"
+    "gotenberg",
+    "pdf",
+    "telegram",
+    "telegram-bot",
+    "bot-api"
   ],
   "devDependencies": {
     "@types/node": "^18.16.0",

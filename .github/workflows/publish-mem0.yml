@@ -1,0 +1,69 @@
+name: Publish Mem0 to npm
+
+on:
+  workflow_dispatch:
+    inputs:
+      version_bump:
+        description: 'Version bump type'
+        required: true
+        default: 'patch'
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    defaults:
+      run:
+        working-directory: mem0-package
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Sync dist files from package/dist
+        working-directory: .
+        run: |
+          mkdir -p mem0-package/dist/nodes/Mem0
+          mkdir -p mem0-package/dist/credentials
+          cp package/dist/nodes/Mem0/Mem0.node.js        mem0-package/dist/nodes/Mem0/Mem0.node.js
+          cp package/dist/nodes/Mem0/Mem0Memory.node.js   mem0-package/dist/nodes/Mem0/Mem0Memory.node.js
+          cp package/dist/nodes/Mem0/Mem0AiTools.node.js  mem0-package/dist/nodes/Mem0/Mem0AiTools.node.js
+          cp package/dist/nodes/Mem0/mem0.svg             mem0-package/dist/nodes/Mem0/mem0.svg
+          cp package/dist/credentials/Mem0Api.credentials.js         mem0-package/dist/credentials/Mem0Api.credentials.js
+          cp package/dist/credentials/Mem0SelfHostedApi.credentials.js mem0-package/dist/credentials/Mem0SelfHostedApi.credentials.js
+
+      - name: Validate node syntax
+        working-directory: .
+        run: |
+          node --check mem0-package/dist/credentials/Mem0Api.credentials.js
+          node --check mem0-package/dist/credentials/Mem0SelfHostedApi.credentials.js
+          node --check mem0-package/dist/nodes/Mem0/Mem0.node.js
+          node --check mem0-package/dist/nodes/Mem0/Mem0Memory.node.js
+          node --check mem0-package/dist/nodes/Mem0/Mem0AiTools.node.js
+          echo "✅ All files pass syntax check"
+
+      - name: Bump version
+        working-directory: .
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          npm version ${{ github.event.inputs.version_bump }} --no-git-tag-version --prefix mem0-package
+          git add mem0-package/package.json
+          git commit -m "chore: bump mem0 version [${{ github.event.inputs.version_bump }}] [skip ci]"
+          git push --force-with-lease
+
+      - name: Publish to npm
+        run: npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NODE_AUTH_TOKEN }}
