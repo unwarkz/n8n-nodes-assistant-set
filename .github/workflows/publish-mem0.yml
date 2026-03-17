@@ -40,6 +40,7 @@ jobs:
           cp package/dist/nodes/Mem0/Mem0Memory.node.js   mem0-package/dist/nodes/Mem0/Mem0Memory.node.js
           cp package/dist/nodes/Mem0/Mem0AiTools.node.js  mem0-package/dist/nodes/Mem0/Mem0AiTools.node.js
           cp package/dist/nodes/Mem0/mem0.svg             mem0-package/dist/nodes/Mem0/mem0.svg
+          cp package/dist/nodes/Mem0/GenericFunctions.js  mem0-package/dist/nodes/Mem0/GenericFunctions.js
           cp package/dist/credentials/Mem0Api.credentials.js         mem0-package/dist/credentials/Mem0Api.credentials.js
           cp package/dist/credentials/Mem0SelfHostedApi.credentials.js mem0-package/dist/credentials/Mem0SelfHostedApi.credentials.js
 
@@ -51,6 +52,7 @@ jobs:
           node --check mem0-package/dist/nodes/Mem0/Mem0.node.js
           node --check mem0-package/dist/nodes/Mem0/Mem0Memory.node.js
           node --check mem0-package/dist/nodes/Mem0/Mem0AiTools.node.js
+          node --check mem0-package/dist/nodes/Mem0/GenericFunctions.js
           echo "✅ All files pass syntax check"
 
       - name: Bump version
