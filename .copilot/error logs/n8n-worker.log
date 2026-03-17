@@ -1,0 +1,292 @@
+2026-03-17T21:17:31.768Z | info  | Worker started execution 114613 (job 112997) {"scopes":["scaling"],"executionId":"114613","workflowId":"AJ31C48GZYhrLwCJ","jobId":"112997","file":"job-processor.js","function":"processJob"}
+
+2026-03-17T21:17:31.786Z | debug | Execution ID 114613 will run executing all nodes. {"executionId":"114613","file":"manual-execution.service.js","function":"runManually"}
+
+2026-03-17T21:17:31.786Z | debug | Workflow execution started {"workflowId":"AJ31C48GZYhrLwCJ","file":"logger-proxy.js","function":"exports.debug"}
+
+2026-03-17T21:17:31.787Z | debug | Executing hook (hookFunctionsPush) {"executionId":"114613","pushRef":"b6trzfbqvx","workflowId":"AJ31C48GZYhrLwCJ","file":"execution-lifecycle-hooks.js"}
+
+2026-03-17T21:17:31.788Z | debug | Start executing node "Telegram Trigger" {"node":"Telegram Trigger","workflowId":"AJ31C48GZYhrLwCJ","file":"logger-proxy.js","function":"exports.debug"}
+
+2026-03-17T21:17:31.788Z | debug | Executing hook on node "Telegram Trigger" (hookFunctionsPush) {"executionId":"114613","pushRef":"b6trzfbqvx","workflowId":"AJ31C48GZYhrLwCJ","file":"execution-lifecycle-hooks.js"}
+
+2026-03-17T21:17:31.788Z | debug | Running node "Telegram Trigger" finished successfully {"node":"Telegram Trigger","workflowId":"AJ31C48GZYhrLwCJ","file":"logger-proxy.js","function":"exports.debug"}
+
+2026-03-17T21:17:31.789Z | debug | Executing hook on node "Telegram Trigger" (hookFunctionsPush) {"executionId":"114613","pushRef":"b6trzfbqvx","workflowId":"AJ31C48GZYhrLwCJ","file":"execution-lifecycle-hooks.js"}
+
+2026-03-17T21:17:31.789Z | debug | Start executing node "Code in JavaScript1" {"node":"Code in JavaScript1","workflowId":"AJ31C48GZYhrLwCJ","file":"logger-proxy.js","function":"exports.debug"}
+
+2026-03-17T21:17:31.789Z | debug | Executing hook on node "Code in JavaScript1" (hookFunctionsPush) {"executionId":"114613","pushRef":"b6trzfbqvx","workflowId":"AJ31C48GZYhrLwCJ","file":"execution-lifecycle-hooks.js"}
+
+2026-03-17T21:17:31.790Z | debug | Running node "Code in JavaScript1" started {"node":"Code in JavaScript1","workflowId":"AJ31C48GZYhrLwCJ","file":"logger-proxy.js","function":"exports.debug"}
+
+2026-03-17T21:17:31.790Z | debug | Published pubsub msg: relay-execution-lifecycle-event (executionStarted) {"scopes":["scaling","pubsub"],"msg":"relay-execution-lifecycle-event","channel":"n8n:n8n.commands","type":"executionStarted","executionId":"114613","file":"publisher.service.js","function":"publishCommand"}
+
+2026-03-17T21:17:31.791Z | debug | Published pubsub msg: relay-execution-lifecycle-event (nodeExecuteBefore) {"scopes":["scaling","pubsub"],"msg":"relay-execution-lifecycle-event","channel":"n8n:n8n.commands","type":"nodeExecuteBefore","executionId":"114613","file":"publisher.service.js","function":"publishCommand"}
+
+2026-03-17T21:17:31.791Z | debug | Published pubsub msg: relay-execution-lifecycle-event (nodeExecuteAfter) {"scopes":["scaling","pubsub"],"msg":"relay-execution-lifecycle-event","channel":"n8n:n8n.commands","type":"nodeExecuteAfter","executionId":"114613","file":"publisher.service.js","function":"publishCommand"}
+
+2026-03-17T21:17:31.791Z | debug | Published pubsub msg: relay-execution-lifecycle-event (nodeExecuteAfterData) {"scopes":["scaling","pubsub"],"msg":"relay-execution-lifecycle-event","channel":"n8n:n8n.commands","type":"nodeExecuteAfterData","executionId":"114613","file":"publisher.service.js","function":"publishCommand"}
+
+2026-03-17T21:17:31.791Z | debug | Published pubsub msg: relay-execution-lifecycle-event (nodeExecuteBefore) {"scopes":["scaling","pubsub"],"msg":"relay-execution-lifecycle-event","channel":"n8n:n8n.commands","type":"nodeExecuteBefore","executionId":"114613","file":"publisher.service.js","function":"publishCommand"}
+
+2026-03-17T21:17:31.792Z | debug | Task (VLXp8DIc) deferred until runner is ready {"file":"task-broker.service.js","function":"acceptOffer"}
+
+2026-03-17T21:17:31.792Z | debug | Deregistered runner "2a879d4425ce0b19" {"file":"task-broker-ws-server.js","function":"removeConnection"}
+
+2026-03-17T21:17:32.897Z | info  | Registered runner "JS Task Runner" (FAT8rPNGkwX4oIQ9fba4F)  {"file":"task-broker-ws-server.js","function":"onMessage"}
+
+2026-03-17T21:17:33.210Z | debug | Running node "Code in JavaScript1" finished successfully {"node":"Code in JavaScript1","workflowId":"AJ31C48GZYhrLwCJ","file":"logger-proxy.js","function":"exports.debug"}
+
+2026-03-17T21:17:33.210Z | debug | Executing hook on node "Code in JavaScript1" (hookFunctionsPush) {"executionId":"114613","pushRef":"b6trzfbqvx","workflowId":"AJ31C48GZYhrLwCJ","file":"execution-lifecycle-hooks.js"}
+
+2026-03-17T21:17:33.210Z | debug | Start executing node "Is Owner?" {"node":"Is Owner?","workflowId":"AJ31C48GZYhrLwCJ","file":"logger-proxy.js","function":"exports.debug"}
+
+2026-03-17T21:17:33.211Z | debug | Executing hook on node "Is Owner?" (hookFunctionsPush) {"executionId":"114613","pushRef":"b6trzfbqvx","workflowId":"AJ31C48GZYhrLwCJ","file":"execution-lifecycle-hooks.js"}
+
+2026-03-17T21:17:33.211Z | debug | Running node "Is Owner?" started {"node":"Is Owner?","workflowId":"AJ31C48GZYhrLwCJ","file":"logger-proxy.js","function":"exports.debug"}
+
+2026-03-17T21:17:33.212Z | debug | Running node "Is Owner?" finished successfully {"node":"Is Owner?","workflowId":"AJ31C48GZYhrLwCJ","file":"logger-proxy.js","function":"exports.debug"}
+
+2026-03-17T21:17:33.212Z | debug | Executing hook on node "Is Owner?" (hookFunctionsPush) {"executionId":"114613","pushRef":"b6trzfbqvx","workflowId":"AJ31C48GZYhrLwCJ","file":"execution-lifecycle-hooks.js"}
+
+2026-03-17T21:17:33.212Z | debug | Start executing node "Command or Chat?" {"node":"Command or Chat?","workflowId":"AJ31C48GZYhrLwCJ","file":"logger-proxy.js","function":"exports.debug"}
+
+2026-03-17T21:17:33.213Z | debug | Executing hook on node "Command or Chat?" (hookFunctionsPush) {"executionId":"114613","pushRef":"b6trzfbqvx","workflowId":"AJ31C48GZYhrLwCJ","file":"execution-lifecycle-hooks.js"}
+
+2026-03-17T21:17:33.213Z | debug | Running node "Command or Chat?" started {"node":"Command or Chat?","workflowId":"AJ31C48GZYhrLwCJ","file":"logger-proxy.js","function":"exports.debug"}
+
+2026-03-17T21:17:33.215Z | debug | Running node "Command or Chat?" finished successfully {"node":"Command or Chat?","workflowId":"AJ31C48GZYhrLwCJ","file":"logger-proxy.js","function":"exports.debug"}
+
+2026-03-17T21:17:33.216Z | debug | Executing hook on node "Command or Chat?" (hookFunctionsPush) {"executionId":"114613","pushRef":"b6trzfbqvx","workflowId":"AJ31C48GZYhrLwCJ","file":"execution-lifecycle-hooks.js"}
+
+2026-03-17T21:17:33.216Z | debug | Start executing node "AI Agent" {"node":"AI Agent","workflowId":"AJ31C48GZYhrLwCJ","file":"logger-proxy.js","function":"exports.debug"}
+
+2026-03-17T21:17:33.216Z | debug | Executing hook on node "AI Agent" (hookFunctionsPush) {"executionId":"114613","pushRef":"b6trzfbqvx","workflowId":"AJ31C48GZYhrLwCJ","file":"execution-lifecycle-hooks.js"}
+
+2026-03-17T21:17:33.216Z | debug | Running node "AI Agent" started {"node":"AI Agent","workflowId":"AJ31C48GZYhrLwCJ","file":"logger-proxy.js","function":"exports.debug"}
+
+2026-03-17T21:17:33.217Z | debug | Executing Tools Agent {"file":"execute.js","function":"toolsAgentExecute"}
+
+2026-03-17T21:17:33.244Z | debug | Published pubsub msg: relay-execution-lifecycle-event (nodeExecuteAfter) {"scopes":["scaling","pubsub"],"msg":"relay-execution-lifecycle-event","channel":"n8n:n8n.commands","type":"nodeExecuteAfter","executionId":"114613","file":"publisher.service.js","function":"publishCommand"}
+
+2026-03-17T21:17:33.244Z | debug | Published pubsub msg: relay-execution-lifecycle-event (nodeExecuteAfterData) {"scopes":["scaling","pubsub"],"msg":"relay-execution-lifecycle-event","channel":"n8n:n8n.commands","type":"nodeExecuteAfterData","executionId":"114613","file":"publisher.service.js","function":"publishCommand"}
+
+2026-03-17T21:17:33.245Z | debug | Published pubsub msg: relay-execution-lifecycle-event (nodeExecuteBefore) {"scopes":["scaling","pubsub"],"msg":"relay-execution-lifecycle-event","channel":"n8n:n8n.commands","type":"nodeExecuteBefore","executionId":"114613","file":"publisher.service.js","function":"publishCommand"}
+
+2026-03-17T21:17:33.245Z | debug | Published pubsub msg: relay-execution-lifecycle-event (nodeExecuteAfter) {"scopes":["scaling","pubsub"],"msg":"relay-execution-lifecycle-event","channel":"n8n:n8n.commands","type":"nodeExecuteAfter","executionId":"114613","file":"publisher.service.js","function":"publishCommand"}
+
+2026-03-17T21:17:33.245Z | debug | Published pubsub msg: relay-execution-lifecycle-event (nodeExecuteAfterData) {"scopes":["scaling","pubsub"],"msg":"relay-execution-lifecycle-event","channel":"n8n:n8n.commands","type":"nodeExecuteAfterData","executionId":"114613","file":"publisher.service.js","function":"publishCommand"}
+
+2026-03-17T21:17:33.245Z | debug | Published pubsub msg: relay-execution-lifecycle-event (nodeExecuteBefore) {"scopes":["scaling","pubsub"],"msg":"relay-execution-lifecycle-event","channel":"n8n:n8n.commands","type":"nodeExecuteBefore","executionId":"114613","file":"publisher.service.js","function":"publishCommand"}
+
+2026-03-17T21:17:33.245Z | debug | Published pubsub msg: relay-execution-lifecycle-event (nodeExecuteAfter) {"scopes":["scaling","pubsub"],"msg":"relay-execution-lifecycle-event","channel":"n8n:n8n.commands","type":"nodeExecuteAfter","executionId":"114613","file":"publisher.service.js","function":"publishCommand"}
+
+2026-03-17T21:17:33.245Z | debug | Published pubsub msg: relay-execution-lifecycle-event (nodeExecuteAfterData) {"scopes":["scaling","pubsub"],"msg":"relay-execution-lifecycle-event","channel":"n8n:n8n.commands","type":"nodeExecuteAfterData","executionId":"114613","file":"publisher.service.js","function":"publishCommand"}
+
+2026-03-17T21:17:33.245Z | debug | Published pubsub msg: relay-execution-lifecycle-event (nodeExecuteBefore) {"scopes":["scaling","pubsub"],"msg":"relay-execution-lifecycle-event","channel":"n8n:n8n.commands","type":"nodeExecuteBefore","executionId":"114613","file":"publisher.service.js","function":"publishCommand"}
+
+2026-03-17T21:17:33.288Z | debug | Executing hook on node "Redis Chat Memory" (hookFunctionsPush) {"executionId":"114613","pushRef":"b6trzfbqvx","workflowId":"AJ31C48GZYhrLwCJ","file":"execution-lifecycle-hooks.js"}
+
+2026-03-17T21:17:33.290Z | debug | Published pubsub msg: relay-execution-lifecycle-event (nodeExecuteBefore) {"scopes":["scaling","pubsub"],"msg":"relay-execution-lifecycle-event","channel":"n8n:n8n.commands","type":"nodeExecuteBefore","executionId":"114613","file":"publisher.service.js","function":"publishCommand"}
+
+2026-03-17T21:17:33.291Z | debug | Executing hook on node "Redis Chat Memory" (hookFunctionsPush) {"executionId":"114613","pushRef":"b6trzfbqvx","workflowId":"AJ31C48GZYhrLwCJ","file":"execution-lifecycle-hooks.js"}
+
+2026-03-17T21:17:33.325Z | debug | Executing hook on node "Google Gemini Chat Model" (hookFunctionsPush) {"executionId":"114613","pushRef":"b6trzfbqvx","workflowId":"AJ31C48GZYhrLwCJ","file":"execution-lifecycle-hooks.js"}
+
+2026-03-17T21:17:33.331Z | debug | Published pubsub msg: relay-execution-lifecycle-event (nodeExecuteAfter) {"scopes":["scaling","pubsub"],"msg":"relay-execution-lifecycle-event","channel":"n8n:n8n.commands","type":"nodeExecuteAfter","executionId":"114613","file":"publisher.service.js","function":"publishCommand"}
+
+2026-03-17T21:17:33.331Z | debug | Published pubsub msg: relay-execution-lifecycle-event (nodeExecuteAfterData) {"scopes":["scaling","pubsub"],"msg":"relay-execution-lifecycle-event","channel":"n8n:n8n.commands","type":"nodeExecuteAfterData","executionId":"114613","file":"publisher.service.js","function":"publishCommand"}
+
+2026-03-17T21:17:33.332Z | debug | Published pubsub msg: relay-execution-lifecycle-event (nodeExecuteBefore) {"scopes":["scaling","pubsub"],"msg":"relay-execution-lifecycle-event","channel":"n8n:n8n.commands","type":"nodeExecuteBefore","executionId":"114613","file":"publisher.service.js","function":"publishCommand"}
+
+2026-03-17T21:17:42.662Z | debug | Executing hook on node "Google Gemini Chat Model" (hookFunctionsPush) {"executionId":"114613","pushRef":"b6trzfbqvx","workflowId":"AJ31C48GZYhrLwCJ","file":"execution-lifecycle-hooks.js"}
+
+2026-03-17T21:17:42.665Z | debug | [Telegram] telegram_get_file called {"file_id":"BQACAgIAAxkBAAO1abhye9rJuaxkZugGimqW8vVUJM0AAhWeAAJ8ncFJn5y9N9jIb7U6BA","file":"TelegramBotAiTools.node.js","function":"log"}
+
+2026-03-17T21:17:42.665Z | debug | Executing hook on node "Telegram Bot AI Tools" (hookFunctionsPush) {"executionId":"114613","pushRef":"b6trzfbqvx","workflowId":"AJ31C48GZYhrLwCJ","file":"execution-lifecycle-hooks.js"}
+
+2026-03-17T21:17:42.666Z | debug | Published pubsub msg: relay-execution-lifecycle-event (nodeExecuteAfter) {"scopes":["scaling","pubsub"],"msg":"relay-execution-lifecycle-event","channel":"n8n:n8n.commands","type":"nodeExecuteAfter","executionId":"114613","file":"publisher.service.js","function":"publishCommand"}
+
+2026-03-17T21:17:42.666Z | debug | Published pubsub msg: relay-execution-lifecycle-event (nodeExecuteAfterData) {"scopes":["scaling","pubsub"],"msg":"relay-execution-lifecycle-event","channel":"n8n:n8n.commands","type":"nodeExecuteAfterData","executionId":"114613","file":"publisher.service.js","function":"publishCommand"}
+
+2026-03-17T21:17:42.666Z | debug | Published pubsub msg: relay-execution-lifecycle-event (nodeExecuteBefore) {"scopes":["scaling","pubsub"],"msg":"relay-execution-lifecycle-event","channel":"n8n:n8n.commands","type":"nodeExecuteBefore","executionId":"114613","file":"publisher.service.js","function":"publishCommand"}
+
+2026-03-17T21:17:43.490Z | info  | [Telegram] telegram_get_file succeeded {"file_id":"BQACAgIAAxkBAAO1abhye9rJuaxkZugGimqW8vVUJM0AAhWeAAJ8ncFJn5y9N9jIb7U6BA","filename":"file_2.docx","sizeKb":33,"file":"TelegramBotAiTools.node.js","function":"log"}
+
+2026-03-17T21:17:43.491Z | debug | Executing hook on node "Telegram Bot AI Tools" (hookFunctionsPush) {"executionId":"114613","pushRef":"b6trzfbqvx","workflowId":"AJ31C48GZYhrLwCJ","file":"execution-lifecycle-hooks.js"}
+
+2026-03-17T21:17:43.513Z | debug | Executing hook on node "Google Gemini Chat Model" (hookFunctionsPush) {"executionId":"114613","pushRef":"b6trzfbqvx","workflowId":"AJ31C48GZYhrLwCJ","file":"execution-lifecycle-hooks.js"}
+
+2026-03-17T21:17:43.516Z | debug | Published pubsub msg: relay-execution-lifecycle-event (nodeExecuteAfter) {"scopes":["scaling","pubsub"],"msg":"relay-execution-lifecycle-event","channel":"n8n:n8n.commands","type":"nodeExecuteAfter","executionId":"114613","file":"publisher.service.js","function":"publishCommand"}
+
+2026-03-17T21:17:43.516Z | debug | Published pubsub msg: relay-execution-lifecycle-event (nodeExecuteAfterData) {"scopes":["scaling","pubsub"],"msg":"relay-execution-lifecycle-event","channel":"n8n:n8n.commands","type":"nodeExecuteAfterData","executionId":"114613","file":"publisher.service.js","function":"publishCommand"}
+
+2026-03-17T21:17:43.516Z | debug | Published pubsub msg: relay-execution-lifecycle-event (nodeExecuteBefore) {"scopes":["scaling","pubsub"],"msg":"relay-execution-lifecycle-event","channel":"n8n:n8n.commands","type":"nodeExecuteBefore","executionId":"114613","file":"publisher.service.js","function":"publishCommand"}
+
+2026-03-17T21:17:47.496Z | debug | Executing hook on node "Google Gemini Chat Model" (hookFunctionsPush) {"executionId":"114613","pushRef":"b6trzfbqvx","workflowId":"AJ31C48GZYhrLwCJ","file":"execution-lifecycle-hooks.js"}
+
+2026-03-17T21:17:47.499Z | debug | [Gotenberg] gotenberg_libreoffice_convert called {"filename":"Договор_ТОО_Алматинский_завод_Эталон_№20260115_23_01_2026_SSOL_услуга.docx","file":"GotenbergAiTools.node.js","function":"log"}
+
+2026-03-17T21:17:47.499Z | debug | Executing hook on node "Gotenberg AI Tools" (hookFunctionsPush) {"executionId":"114613","pushRef":"b6trzfbqvx","workflowId":"AJ31C48GZYhrLwCJ","file":"execution-lifecycle-hooks.js"}
+
+2026-03-17T21:17:47.500Z | error | [Gotenberg] gotenberg_libreoffice_convert failed {"filename":"Договор_ТОО_Алматинский_завод_Эталон_№20260115_23_01_2026_SSOL_услуга.docx","error":"Cannot read properties of undefined (reading 'telegram_file_0')","file":"GotenbergAiTools.node.js","function":"log"}
+
+2026-03-17T21:17:47.500Z | debug | Executing hook on node "Gotenberg AI Tools" (hookFunctionsPush) {"executionId":"114613","pushRef":"b6trzfbqvx","workflowId":"AJ31C48GZYhrLwCJ","file":"execution-lifecycle-hooks.js"}
+
+2026-03-17T21:17:47.523Z | debug | Executing hook on node "Google Gemini Chat Model" (hookFunctionsPush) {"executionId":"114613","pushRef":"b6trzfbqvx","workflowId":"AJ31C48GZYhrLwCJ","file":"execution-lifecycle-hooks.js"}
+
+2026-03-17T21:17:47.528Z | debug | Published pubsub msg: relay-execution-lifecycle-event (nodeExecuteAfter) {"scopes":["scaling","pubsub"],"msg":"relay-execution-lifecycle-event","channel":"n8n:n8n.commands","type":"nodeExecuteAfter","executionId":"114613","file":"publisher.service.js","function":"publishCommand"}
+
+2026-03-17T21:17:47.528Z | debug | Published pubsub msg: relay-execution-lifecycle-event (nodeExecuteAfterData) {"scopes":["scaling","pubsub"],"msg":"relay-execution-lifecycle-event","channel":"n8n:n8n.commands","type":"nodeExecuteAfterData","executionId":"114613","file":"publisher.service.js","function":"publishCommand"}
+
+2026-03-17T21:17:47.528Z | debug | Published pubsub msg: relay-execution-lifecycle-event (nodeExecuteBefore) {"scopes":["scaling","pubsub"],"msg":"relay-execution-lifecycle-event","channel":"n8n:n8n.commands","type":"nodeExecuteBefore","executionId":"114613","file":"publisher.service.js","function":"publishCommand"}
+
+2026-03-17T21:17:47.528Z | debug | Published pubsub msg: relay-execution-lifecycle-event (nodeExecuteAfter) {"scopes":["scaling","pubsub"],"msg":"relay-execution-lifecycle-event","channel":"n8n:n8n.commands","type":"nodeExecuteAfter","executionId":"114613","file":"publisher.service.js","function":"publishCommand"}
+
+2026-03-17T21:17:47.528Z | debug | Published pubsub msg: relay-execution-lifecycle-event (nodeExecuteAfterData) {"scopes":["scaling","pubsub"],"msg":"relay-execution-lifecycle-event","channel":"n8n:n8n.commands","type":"nodeExecuteAfterData","executionId":"114613","file":"publisher.service.js","function":"publishCommand"}
+
+2026-03-17T21:17:47.528Z | debug | Published pubsub msg: relay-execution-lifecycle-event (nodeExecuteBefore) {"scopes":["scaling","pubsub"],"msg":"relay-execution-lifecycle-event","channel":"n8n:n8n.commands","type":"nodeExecuteBefore","executionId":"114613","file":"publisher.service.js","function":"publishCommand"}
+
+2026-03-17T21:17:48.214Z | debug | Deregistered runner "FAT8rPNGkwX4oIQ9fba4F" {"file":"task-broker-ws-server.js","function":"removeConnection"}
+
+2026-03-17T21:17:48.235Z | info  | Registered runner "launcher-javascript" (50f19431b1049d5e)  {"file":"task-broker-ws-server.js","function":"onMessage"}
+
+2026-03-17T21:17:53.000Z | debug | Executing hook on node "Google Gemini Chat Model" (hookFunctionsPush) {"executionId":"114613","pushRef":"b6trzfbqvx","workflowId":"AJ31C48GZYhrLwCJ","file":"execution-lifecycle-hooks.js"}
+
+2026-03-17T21:17:53.003Z | debug | [Gotenberg] gotenberg_libreoffice_convert called {"file":"GotenbergAiTools.node.js","function":"log"}
+
+2026-03-17T21:17:53.004Z | debug | Executing hook on node "Gotenberg AI Tools" (hookFunctionsPush) {"executionId":"114613","pushRef":"b6trzfbqvx","workflowId":"AJ31C48GZYhrLwCJ","file":"execution-lifecycle-hooks.js"}
+
+2026-03-17T21:17:53.004Z | error | [Gotenberg] gotenberg_libreoffice_convert failed {"error":"Cannot read properties of undefined (reading 'telegram_file_0')","file":"GotenbergAiTools.node.js","function":"log"}
+
+2026-03-17T21:17:53.004Z | debug | Executing hook on node "Gotenberg AI Tools" (hookFunctionsPush) {"executionId":"114613","pushRef":"b6trzfbqvx","workflowId":"AJ31C48GZYhrLwCJ","file":"execution-lifecycle-hooks.js"}
+
+2026-03-17T21:17:53.028Z | debug | Executing hook on node "Google Gemini Chat Model" (hookFunctionsPush) {"executionId":"114613","pushRef":"b6trzfbqvx","workflowId":"AJ31C48GZYhrLwCJ","file":"execution-lifecycle-hooks.js"}
+
+2026-03-17T21:17:53.033Z | debug | Published pubsub msg: relay-execution-lifecycle-event (nodeExecuteAfter) {"scopes":["scaling","pubsub"],"msg":"relay-execution-lifecycle-event","channel":"n8n:n8n.commands","type":"nodeExecuteAfter","executionId":"114613","file":"publisher.service.js","function":"publishCommand"}
+
+2026-03-17T21:17:53.033Z | debug | Published pubsub msg: relay-execution-lifecycle-event (nodeExecuteAfterData) {"scopes":["scaling","pubsub"],"msg":"relay-execution-lifecycle-event","channel":"n8n:n8n.commands","type":"nodeExecuteAfterData","executionId":"114613","file":"publisher.service.js","function":"publishCommand"}
+
+2026-03-17T21:17:53.033Z | debug | Published pubsub msg: relay-execution-lifecycle-event (nodeExecuteBefore) {"scopes":["scaling","pubsub"],"msg":"relay-execution-lifecycle-event","channel":"n8n:n8n.commands","type":"nodeExecuteBefore","executionId":"114613","file":"publisher.service.js","function":"publishCommand"}
+
+2026-03-17T21:17:53.033Z | debug | Published pubsub msg: relay-execution-lifecycle-event (nodeExecuteAfter) {"scopes":["scaling","pubsub"],"msg":"relay-execution-lifecycle-event","channel":"n8n:n8n.commands","type":"nodeExecuteAfter","executionId":"114613","file":"publisher.service.js","function":"publishCommand"}
+
+2026-03-17T21:17:53.033Z | debug | Published pubsub msg: relay-execution-lifecycle-event (nodeExecuteAfterData) {"scopes":["scaling","pubsub"],"msg":"relay-execution-lifecycle-event","channel":"n8n:n8n.commands","type":"nodeExecuteAfterData","executionId":"114613","file":"publisher.service.js","function":"publishCommand"}
+
+2026-03-17T21:17:53.033Z | debug | Published pubsub msg: relay-execution-lifecycle-event (nodeExecuteBefore) {"scopes":["scaling","pubsub"],"msg":"relay-execution-lifecycle-event","channel":"n8n:n8n.commands","type":"nodeExecuteBefore","executionId":"114613","file":"publisher.service.js","function":"publishCommand"}
+
+2026-03-17T21:18:01.852Z | debug | Executing hook on node "Google Gemini Chat Model" (hookFunctionsPush) {"executionId":"114613","pushRef":"b6trzfbqvx","workflowId":"AJ31C48GZYhrLwCJ","file":"execution-lifecycle-hooks.js"}
+
+2026-03-17T21:18:01.854Z | debug | [Telegram] telegram_send_document called {"chat_id":"5478981","binary_property_name":"telegram_file_0","file":"TelegramBotAiTools.node.js","function":"log"}
+
+2026-03-17T21:18:01.854Z | debug | Executing hook on node "Telegram Bot AI Tools" (hookFunctionsPush) {"executionId":"114613","pushRef":"b6trzfbqvx","workflowId":"AJ31C48GZYhrLwCJ","file":"execution-lifecycle-hooks.js"}
+
+2026-03-17T21:18:01.854Z | error | [Telegram] telegram_send_document failed {"error":"Cannot read properties of undefined (reading 'telegram_file_0')","file":"TelegramBotAiTools.node.js","function":"log"}
+
+2026-03-17T21:18:01.855Z | debug | Executing hook on node "Telegram Bot AI Tools" (hookFunctionsPush) {"executionId":"114613","pushRef":"b6trzfbqvx","workflowId":"AJ31C48GZYhrLwCJ","file":"execution-lifecycle-hooks.js"}
+
+2026-03-17T21:18:01.875Z | debug | Executing hook on node "Google Gemini Chat Model" (hookFunctionsPush) {"executionId":"114613","pushRef":"b6trzfbqvx","workflowId":"AJ31C48GZYhrLwCJ","file":"execution-lifecycle-hooks.js"}
+
+2026-03-17T21:18:01.879Z | debug | Published pubsub msg: relay-execution-lifecycle-event (nodeExecuteAfter) {"scopes":["scaling","pubsub"],"msg":"relay-execution-lifecycle-event","channel":"n8n:n8n.commands","type":"nodeExecuteAfter","executionId":"114613","file":"publisher.service.js","function":"publishCommand"}
+
+2026-03-17T21:18:01.879Z | debug | Published pubsub msg: relay-execution-lifecycle-event (nodeExecuteAfterData) {"scopes":["scaling","pubsub"],"msg":"relay-execution-lifecycle-event","channel":"n8n:n8n.commands","type":"nodeExecuteAfterData","executionId":"114613","file":"publisher.service.js","function":"publishCommand"}
+
+2026-03-17T21:18:01.879Z | debug | Published pubsub msg: relay-execution-lifecycle-event (nodeExecuteBefore) {"scopes":["scaling","pubsub"],"msg":"relay-execution-lifecycle-event","channel":"n8n:n8n.commands","type":"nodeExecuteBefore","executionId":"114613","file":"publisher.service.js","function":"publishCommand"}
+
+2026-03-17T21:18:01.880Z | debug | Published pubsub msg: relay-execution-lifecycle-event (nodeExecuteAfter) {"scopes":["scaling","pubsub"],"msg":"relay-execution-lifecycle-event","channel":"n8n:n8n.commands","type":"nodeExecuteAfter","executionId":"114613","file":"publisher.service.js","function":"publishCommand"}
+
+2026-03-17T21:18:01.880Z | debug | Published pubsub msg: relay-execution-lifecycle-event (nodeExecuteAfterData) {"scopes":["scaling","pubsub"],"msg":"relay-execution-lifecycle-event","channel":"n8n:n8n.commands","type":"nodeExecuteAfterData","executionId":"114613","file":"publisher.service.js","function":"publishCommand"}
+
+2026-03-17T21:18:01.880Z | debug | Published pubsub msg: relay-execution-lifecycle-event (nodeExecuteBefore) {"scopes":["scaling","pubsub"],"msg":"relay-execution-lifecycle-event","channel":"n8n:n8n.commands","type":"nodeExecuteBefore","executionId":"114613","file":"publisher.service.js","function":"publishCommand"}
+
+2026-03-17T21:18:07.297Z | debug | Executing hook on node "Google Gemini Chat Model" (hookFunctionsPush) {"executionId":"114613","pushRef":"b6trzfbqvx","workflowId":"AJ31C48GZYhrLwCJ","file":"execution-lifecycle-hooks.js"}
+
+2026-03-17T21:18:07.299Z | debug | [Telegram] telegram_send_message called {"chat_id":"5478981","file":"TelegramBotAiTools.node.js","function":"log"}
+
+2026-03-17T21:18:07.300Z | debug | Executing hook on node "Telegram Bot AI Tools" (hookFunctionsPush) {"executionId":"114613","pushRef":"b6trzfbqvx","workflowId":"AJ31C48GZYhrLwCJ","file":"execution-lifecycle-hooks.js"}
+
+2026-03-17T21:18:07.301Z | debug | Published pubsub msg: relay-execution-lifecycle-event (nodeExecuteAfter) {"scopes":["scaling","pubsub"],"msg":"relay-execution-lifecycle-event","channel":"n8n:n8n.commands","type":"nodeExecuteAfter","executionId":"114613","file":"publisher.service.js","function":"publishCommand"}
+
+2026-03-17T21:18:07.301Z | debug | Published pubsub msg: relay-execution-lifecycle-event (nodeExecuteAfterData) {"scopes":["scaling","pubsub"],"msg":"relay-execution-lifecycle-event","channel":"n8n:n8n.commands","type":"nodeExecuteAfterData","executionId":"114613","file":"publisher.service.js","function":"publishCommand"}
+
+2026-03-17T21:18:07.301Z | debug | Published pubsub msg: relay-execution-lifecycle-event (nodeExecuteBefore) {"scopes":["scaling","pubsub"],"msg":"relay-execution-lifecycle-event","channel":"n8n:n8n.commands","type":"nodeExecuteBefore","executionId":"114613","file":"publisher.service.js","function":"publishCommand"}
+
+2026-03-17T21:18:07.965Z | debug | Executing hook on node "Telegram Bot AI Tools" (hookFunctionsPush) {"executionId":"114613","pushRef":"b6trzfbqvx","workflowId":"AJ31C48GZYhrLwCJ","file":"execution-lifecycle-hooks.js"}
+
+2026-03-17T21:18:07.990Z | debug | Executing hook on node "Google Gemini Chat Model" (hookFunctionsPush) {"executionId":"114613","pushRef":"b6trzfbqvx","workflowId":"AJ31C48GZYhrLwCJ","file":"execution-lifecycle-hooks.js"}
+
+2026-03-17T21:18:07.994Z | debug | Published pubsub msg: relay-execution-lifecycle-event (nodeExecuteAfter) {"scopes":["scaling","pubsub"],"msg":"relay-execution-lifecycle-event","channel":"n8n:n8n.commands","type":"nodeExecuteAfter","executionId":"114613","file":"publisher.service.js","function":"publishCommand"}
+
+2026-03-17T21:18:07.994Z | debug | Published pubsub msg: relay-execution-lifecycle-event (nodeExecuteAfterData) {"scopes":["scaling","pubsub"],"msg":"relay-execution-lifecycle-event","channel":"n8n:n8n.commands","type":"nodeExecuteAfterData","executionId":"114613","file":"publisher.service.js","function":"publishCommand"}
+
+2026-03-17T21:18:07.994Z | debug | Published pubsub msg: relay-execution-lifecycle-event (nodeExecuteBefore) {"scopes":["scaling","pubsub"],"msg":"relay-execution-lifecycle-event","channel":"n8n:n8n.commands","type":"nodeExecuteBefore","executionId":"114613","file":"publisher.service.js","function":"publishCommand"}
+
+2026-03-17T21:18:15.203Z | debug | Executing hook on node "Google Gemini Chat Model" (hookFunctionsPush) {"executionId":"114613","pushRef":"b6trzfbqvx","workflowId":"AJ31C48GZYhrLwCJ","file":"execution-lifecycle-hooks.js"}
+
+2026-03-17T21:18:15.205Z | debug | Executing hook on node "Redis Chat Memory" (hookFunctionsPush) {"executionId":"114613","pushRef":"b6trzfbqvx","workflowId":"AJ31C48GZYhrLwCJ","file":"execution-lifecycle-hooks.js"}
+
+2026-03-17T21:18:15.209Z | debug | Published pubsub msg: relay-execution-lifecycle-event (nodeExecuteAfter) {"scopes":["scaling","pubsub"],"msg":"relay-execution-lifecycle-event","channel":"n8n:n8n.commands","type":"nodeExecuteAfter","executionId":"114613","file":"publisher.service.js","function":"publishCommand"}
+
+2026-03-17T21:18:15.209Z | debug | Published pubsub msg: relay-execution-lifecycle-event (nodeExecuteAfterData) {"scopes":["scaling","pubsub"],"msg":"relay-execution-lifecycle-event","channel":"n8n:n8n.commands","type":"nodeExecuteAfterData","executionId":"114613","file":"publisher.service.js","function":"publishCommand"}
+
+2026-03-17T21:18:15.209Z | debug | Published pubsub msg: relay-execution-lifecycle-event (nodeExecuteBefore) {"scopes":["scaling","pubsub"],"msg":"relay-execution-lifecycle-event","channel":"n8n:n8n.commands","type":"nodeExecuteBefore","executionId":"114613","file":"publisher.service.js","function":"publishCommand"}
+
+2026-03-17T21:18:15.212Z | debug | Executing hook on node "Redis Chat Memory" (hookFunctionsPush) {"executionId":"114613","pushRef":"b6trzfbqvx","workflowId":"AJ31C48GZYhrLwCJ","file":"execution-lifecycle-hooks.js"}
+
+2026-03-17T21:18:15.217Z | debug | Running node "AI Agent" finished successfully {"node":"AI Agent","workflowId":"AJ31C48GZYhrLwCJ","file":"logger-proxy.js","function":"exports.debug"}
+
+2026-03-17T21:18:15.217Z | debug | Executing hook on node "AI Agent" (hookFunctionsPush) {"executionId":"114613","pushRef":"b6trzfbqvx","workflowId":"AJ31C48GZYhrLwCJ","file":"execution-lifecycle-hooks.js"}
+
+2026-03-17T21:18:15.220Z | debug | Start executing node "Telegram: Send Reply" {"node":"Telegram: Send Reply","workflowId":"AJ31C48GZYhrLwCJ","file":"logger-proxy.js","function":"exports.debug"}
+
+2026-03-17T21:18:15.220Z | debug | Executing hook on node "Telegram: Send Reply" (hookFunctionsPush) {"executionId":"114613","pushRef":"b6trzfbqvx","workflowId":"AJ31C48GZYhrLwCJ","file":"execution-lifecycle-hooks.js"}
+
+2026-03-17T21:18:15.220Z | debug | Running node "Telegram: Send Reply" started {"node":"Telegram: Send Reply","workflowId":"AJ31C48GZYhrLwCJ","file":"logger-proxy.js","function":"exports.debug"}
+
+2026-03-17T21:18:15.223Z | debug | Published pubsub msg: relay-execution-lifecycle-event (nodeExecuteAfter) {"scopes":["scaling","pubsub"],"msg":"relay-execution-lifecycle-event","channel":"n8n:n8n.commands","type":"nodeExecuteAfter","executionId":"114613","file":"publisher.service.js","function":"publishCommand"}
+
+2026-03-17T21:18:15.223Z | debug | Published pubsub msg: relay-execution-lifecycle-event (nodeExecuteAfterData) {"scopes":["scaling","pubsub"],"msg":"relay-execution-lifecycle-event","channel":"n8n:n8n.commands","type":"nodeExecuteAfterData","executionId":"114613","file":"publisher.service.js","function":"publishCommand"}
+
+2026-03-17T21:18:15.223Z | debug | Published pubsub msg: relay-execution-lifecycle-event (nodeExecuteAfter) {"scopes":["scaling","pubsub"],"msg":"relay-execution-lifecycle-event","channel":"n8n:n8n.commands","type":"nodeExecuteAfter","executionId":"114613","file":"publisher.service.js","function":"publishCommand"}
+
+2026-03-17T21:18:15.223Z | debug | Published pubsub msg: relay-execution-lifecycle-event (nodeExecuteAfterData) {"scopes":["scaling","pubsub"],"msg":"relay-execution-lifecycle-event","channel":"n8n:n8n.commands","type":"nodeExecuteAfterData","executionId":"114613","file":"publisher.service.js","function":"publishCommand"}
+
+2026-03-17T21:18:15.223Z | debug | Published pubsub msg: relay-execution-lifecycle-event (nodeExecuteBefore) {"scopes":["scaling","pubsub"],"msg":"relay-execution-lifecycle-event","channel":"n8n:n8n.commands","type":"nodeExecuteBefore","executionId":"114613","file":"publisher.service.js","function":"publishCommand"}
+
+2026-03-17T21:18:15.599Z | debug | Running node "Telegram: Send Reply" finished successfully {"node":"Telegram: Send Reply","workflowId":"AJ31C48GZYhrLwCJ","file":"logger-proxy.js","function":"exports.debug"}
+
+2026-03-17T21:18:15.599Z | debug | Executing hook on node "Telegram: Send Reply" (hookFunctionsPush) {"executionId":"114613","pushRef":"b6trzfbqvx","workflowId":"AJ31C48GZYhrLwCJ","file":"execution-lifecycle-hooks.js"}
+
+2026-03-17T21:18:15.600Z | debug | Start executing node "Send a document" {"node":"Send a document","workflowId":"AJ31C48GZYhrLwCJ","file":"logger-proxy.js","function":"exports.debug"}
+
+2026-03-17T21:18:15.600Z | debug | Executing hook on node "Send a document" (hookFunctionsPush) {"executionId":"114613","pushRef":"b6trzfbqvx","workflowId":"AJ31C48GZYhrLwCJ","file":"execution-lifecycle-hooks.js"}
+
+2026-03-17T21:18:15.600Z | debug | Running node "Send a document" started {"node":"Send a document","workflowId":"AJ31C48GZYhrLwCJ","file":"logger-proxy.js","function":"exports.debug"}
+
+2026-03-17T21:18:15.603Z | debug | Running node "Send a document" finished with error {"node":"Send a document","workflowId":"AJ31C48GZYhrLwCJ","file":"logger-proxy.js","function":"exports.debug"}
+
+2026-03-17T21:18:15.605Z | debug | Published pubsub msg: relay-execution-lifecycle-event (nodeExecuteAfter) {"scopes":["scaling","pubsub"],"msg":"relay-execution-lifecycle-event","channel":"n8n:n8n.commands","type":"nodeExecuteAfter","executionId":"114613","file":"publisher.service.js","function":"publishCommand"}
+
+2026-03-17T21:18:15.605Z | debug | Published pubsub msg: relay-execution-lifecycle-event (nodeExecuteAfterData) {"scopes":["scaling","pubsub"],"msg":"relay-execution-lifecycle-event","channel":"n8n:n8n.commands","type":"nodeExecuteAfterData","executionId":"114613","file":"publisher.service.js","function":"publishCommand"}
+
+2026-03-17T21:18:15.605Z | debug | Published pubsub msg: relay-execution-lifecycle-event (nodeExecuteBefore) {"scopes":["scaling","pubsub"],"msg":"relay-execution-lifecycle-event","channel":"n8n:n8n.commands","type":"nodeExecuteBefore","executionId":"114613","file":"publisher.service.js","function":"publishCommand"}
+
+2026-03-17T21:18:15.606Z | debug | Executing hook on node "Send a document" (hookFunctionsPush) {"executionId":"114613","pushRef":"b6trzfbqvx","workflowId":"AJ31C48GZYhrLwCJ","file":"execution-lifecycle-hooks.js"}
+
+2026-03-17T21:18:15.606Z | debug | Workflow execution finished with error {"error":{"level":"warning","tags":{},"description":"Specify the property name of the binary data in input item or use an expression to access the binary data in previous nodes, e.g. \"{{ $(_target_node_).item.binary[_binary_property_name_] }}\"","timestamp":1773782295602,"context":{"itemIndex":0},"functionality":"regular","name":"NodeOperationError","node":{"parameters":{"resource":"message","operation":"sendDocument","chatId":"@unwarkz","binaryData":true,"binaryPropertyName":"={{ $('AI Agent').item.json.intermediateSteps[1].observation.parseJson().base64 }}","replyMarkup":"none","additionalFields":{}},"type":"n8n-nodes-base.telegram","typeVersion":1.2,"position":[7776,-240],"id":"99acccea-18de-4506-95b6-24554e1e17ac","name":"Send a document","webhookId":"09a6d089-b798-4430-90ac-0ef00a3c0abe","credentials":{"telegramApi":{"id":"Kb62FGJhSfv4UcJo","name":"секретарь"}}},"messages":[],"message":"Provided parameter is not a string or binary data object.","stack":"NodeOperationError: Provided parameter is not a string or binary data object.\n    at assertBinaryData (/usr/local/lib/node_modules/n8n/node_modules/.pnpm/n8n-core@file+packages+core_@opentelemetry+api@1.9.0_@opentelemetry+exporter-trace-otlp_9f358c3eeaef0d2736f54ac9757ada43/node_modules/n8n-core/src/execution-engine/node-execution-context/utils/binary-helper-functions.ts:81:9)\n    at Object.assertBinaryData (/usr/local/lib/node_modules/n8n/node_modules/.pnpm/n8n-core@file+packages+core_@opentelemetry+api@1.9.0_@opentelemetry+exporter-trace-otlp_9f358c3eeaef0d2736f54ac9757ada43/node_modules/n8n-core/src/execution-engine/node-execution-context/execute-context.ts:104:21)\n    at ExecuteContext.execute (/usr/local/lib/node_modules/n8n/node_modules/.pnpm/n8n-nodes-base@file+packages+nodes-base_@aws-sdk+credential-providers@3.808.0_asn1.js@5_8da18263ca0574b0db58d4fefd8173ce/node_modules/n8n-nodes-base/nodes/Telegram/Telegram.node.ts:2137:42)\n    at WorkflowExecute.executeNode (/usr/local/lib/node_modules/n8n/node_modules/.pnpm/n8n-core@file+packages+core_@opentelemetry+api@1.9.0_@opentelemetry+exporter-trace-otlp_9f358c3eeaef0d2736f54ac9757ada43/node_modules/n8n-core/src/execution-engine/workflow-execute.ts:1043:31)\n    at WorkflowExecute.runNode (/usr/local/lib/node_modules/n8n/node_modules/.pnpm/n8n-core@file+packages+core_@opentelemetry+api@1.9.0_@opentelemetry+exporter-trace-otlp_9f358c3eeaef0d2736f54ac9757ada43/node_modules/n8n-core/src/execution-engine/workflow-execute.ts:1222:22)\n    at /usr/local/lib/node_modules/n8n/node_modules/.pnpm/n8n-core@file+packages+core_@opentelemetry+api@1.9.0_@opentelemetry+exporter-trace-otlp_9f358c3eeaef0d2736f54ac9757ada43/node_modules/n8n-core/src/execution-engine/workflow-execute.ts:1668:38\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at /usr/local/lib/node_modules/n8n/node_modules/.pnpm/n8n-core@file+packages+core_@opentelemetry+api@1.9.0_@opentelemetry+exporter-trace-otlp_9f358c3eeaef0d2736f54ac9757ada43/node_modules/n8n-core/src/execution-engine/workflow-execute.ts:2313:11"},"workflowId":"AJ31C48GZYhrLwCJ","file":"logger-proxy.js","function":"exports.debug"}
+
+2026-03-17T21:18:15.607Z | debug | Executing hook (hookFunctionsSaveWorker) {"executionId":"114613","workflowId":"AJ31C48GZYhrLwCJ","file":"execution-lifecycle-hooks.js"}
+
+2026-03-17T21:18:15.607Z | debug | Save execution data to database for execution ID 114613 {"executionId":"114613","workflowId":"AJ31C48GZYhrLwCJ","finished":false,"stoppedAt":"2026-03-17T21:18:15.607Z","file":"shared-hook-functions.js","function":"updateExistingExecution"}
+
+2026-03-17T21:18:15.610Z | debug | Published pubsub msg: relay-execution-lifecycle-event (nodeExecuteAfter) {"scopes":["scaling","pubsub"],"msg":"relay-execution-lifecycle-event","channel":"n8n:n8n.commands","type":"nodeExecuteAfter","executionId":"114613","file":"publisher.service.js","function":"publishCommand"}
+
+2026-03-17T21:18:15.610Z | debug | Published pubsub msg: relay-execution-lifecycle-event (nodeExecuteAfterData) {"scopes":["scaling","pubsub"],"msg":"relay-execution-lifecycle-event","channel":"n8n:n8n.commands","type":"nodeExecuteAfterData","executionId":"114613","file":"publisher.service.js","function":"publishCommand"}
+
+2026-03-17T21:18:15.630Z | debug | Executing hook (hookFunctionsPush) {"executionId":"114613","pushRef":"b6trzfbqvx","workflowId":"AJ31C48GZYhrLwCJ","file":"execution-lifecycle-hooks.js"}
+
+2026-03-17T21:18:15.630Z | debug | Published pubsub msg: relay-execution-lifecycle-event (executionFinished) {"scopes":["scaling","pubsub"],"msg":"relay-execution-lifecycle-event","channel":"n8n:n8n.commands","type":"executionFinished","executionId":"114613","file":"publisher.service.js","function":"publishCommand"}
+
+2026-03-17T21:18:15.640Z | info  | Worker finished execution 114613 (job 112997) {"scopes":["scaling"],"executionId":"114613","workflowId":"AJ31C48GZYhrLwCJ","jobId":"112997","success":false,"file":"job-processor.js","function":"processJob"}
+
