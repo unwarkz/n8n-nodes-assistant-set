@@ -30,12 +30,15 @@
     "n8nNodesApiVersion": 1,
     "credentials": [
       "dist/credentials/Mem0Api.credentials.js",
-      "dist/credentials/Mem0SelfHostedApi.credentials.js"
+      "dist/credentials/Mem0SelfHostedApi.credentials.js",
+      "dist/credentials/GotenbergApi.credentials.js"
     ],
     "nodes": [
       "dist/nodes/Mem0/Mem0.node.js",
       "dist/nodes/Mem0/Mem0Memory.node.js",
-      "dist/nodes/Mem0/Mem0AiTools.node.js"
+      "dist/nodes/Mem0/Mem0AiTools.node.js",
+      "dist/nodes/gotenberg/Gotenberg.node.js",
+      "dist/nodes/gotenberg/GotenbergAiTools.node.js"
     ]
   },
   "keywords": [

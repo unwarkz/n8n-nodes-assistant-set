@@ -1,0 +1,51 @@
+{
+  "name": "n8n-nodes-gotenberg-pdf",
+  "version": "1.0.0",
+  "description": "N8N community node for Gotenberg - Docker-based PDF conversion API (Chromium, LibreOffice, PDF Engines)",
+  "license": "MIT",
+  "homepage": "https://github.com/unwarkz/n8n-nodes-mem0-api-server#readme",
+  "author": {
+    "name": "unwarkz"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/unwarkz/n8n-nodes-mem0-api-server.git"
+  },
+  "bugs": {
+    "url": "https://github.com/unwarkz/n8n-nodes-mem0-api-server/issues"
+  },
+  "main": "index.js",
+  "scripts": {
+    "prepublishOnly": "echo 'Skipping build - dist files are pre-built'"
+  },
+  "files": [
+    "dist",
+    "index.js"
+  ],
+  "n8n": {
+    "n8nNodesApiVersion": 1,
+    "credentials": [
+      "dist/credentials/GotenbergApi.credentials.js"
+    ],
+    "nodes": [
+      "dist/nodes/gotenberg/Gotenberg.node.js",
+      "dist/nodes/gotenberg/GotenbergAiTools.node.js"
+    ]
+  },
+  "keywords": [
+    "n8n-community-node-package",
+    "n8n",
+    "gotenberg",
+    "pdf",
+    "pdf-conversion",
+    "chromium",
+    "libreoffice",
+    "html-to-pdf",
+    "document-conversion",
+    "ai",
+    "llm"
+  ],
+  "peerDependencies": {
+    "n8n-workflow": ">=1.0.0"
+  }
+}
