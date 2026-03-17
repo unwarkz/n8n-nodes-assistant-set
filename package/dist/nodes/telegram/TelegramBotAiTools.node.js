@@ -96,13 +96,27 @@ async function downloadTelegramFile(ctx, filePath) {
  *
  * Compatible with N8N_DEFAULT_BINARY_DATA_MODE=filesystem and database.
  * Works correctly with n8n v2 task runners (no in-memory mutation).
+ *
+ * Files are stored in a process-global registry so they can be read by other
+ * AI tool modules (e.g. GotenbergAiTools) in the same n8n execution context.
  */
+// Process-global registry shared across all AI tool modules.
+if (!global._n8nBinaryRegistry) {
+    global._n8nBinaryRegistry = new Map();
+}
 let _binaryCounter = 0;
 async function storeBinaryOutput(ctx, buf, filename, mimeType) {
     const buffer = Buffer.isBuffer(buf) ? buf : Buffer.from(buf);
     const sizeKb = Math.round(buffer.length / 1024);
     const binaryPropertyName = `telegram_file_${_binaryCounter++}`;
     const binaryData = await ctx.helpers.prepareBinaryData(buffer, filename, mimeType);
+    // Keep registry bounded to avoid unbounded memory growth across many runs.
+    if (global._n8nBinaryRegistry.size >= 100) {
+        const firstKey = global._n8nBinaryRegistry.keys().next().value;
+        global._n8nBinaryRegistry.delete(firstKey);
+    }
+    global._n8nBinaryRegistry.set(binaryPropertyName, { buffer, binaryData, filename, mimeType });
+    // Also mutate the input item so in-module getBinaryDataBuffer still works.
     const inputItems = ctx.getInputData();
     const item = inputItems[0] || { json: {}, binary: {} };
     if (!item.binary) item.binary = {};
@@ -242,15 +256,26 @@ class TelegramBotAiTools {
 
         /**
          * Retrieve a binary buffer from n8n's binary data system by property name.
+         * Falls back to the process-global registry so files stored by other tool
+         * modules (e.g. GotenbergAiTools) are accessible here too.
          */
         async function getBinaryInputBuffer(binaryPropertyName) {
+            const reg = global._n8nBinaryRegistry;
+            if (reg && reg.has(binaryPropertyName)) {
+                return reg.get(binaryPropertyName).buffer;
+            }
             return self.helpers.getBinaryDataBuffer(0, binaryPropertyName);
         }
 
         /**
          * Get the binary metadata (fileName, mimeType) for a binary property.
+         * Falls back to the process-global registry for cross-module lookups.
          */
         function getBinaryMeta(binaryPropertyName) {
+            const reg = global._n8nBinaryRegistry;
+            if (reg && reg.has(binaryPropertyName)) {
+                return reg.get(binaryPropertyName).binaryData;
+            }
             const items = self.getInputData();
             const item = items && items[0];
             if (item && item.binary && item.binary[binaryPropertyName]) {
