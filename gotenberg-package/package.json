@@ -1,6 +1,6 @@
 {
   "name": "@unwarkz/n8n-nodes-gotenberg-pdf",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "N8N community node for Gotenberg - Docker-based PDF conversion API (Chromium, LibreOffice, PDF Engines)",
   "license": "MIT",
   "homepage": "https://github.com/unwarkz/n8n-nodes-mem0-api-server#readme",
