@@ -89,6 +89,10 @@ npm install @unwarkz/n8n-nodes-telegram-bot
 4. Paste your bot token
 5. (Optional) Change Base URL if using a [local Bot API server](https://core.telegram.org/bots/api#using-a-local-bot-api-server)
 
+## Part of the Assistant Set
+
+This package is also included in the full [@unwarkz/n8n-nodes-assistant-set](https://www.npmjs.com/package/@unwarkz/n8n-nodes-assistant-set) package
+
 ## License
 
 MIT
