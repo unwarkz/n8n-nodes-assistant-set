@@ -31,14 +31,18 @@ Connect to an n8n AI Agent node to give it PDF capabilities:
 
 | Tool | Description |
 |------|-------------|
-| `gotenberg_url_to_pdf` | Convert a public URL to a PDF |
-| `gotenberg_html_to_pdf` | Convert an HTML string to PDF |
-| `gotenberg_url_screenshot` | Take a screenshot of a URL |
-| `gotenberg_libreoffice_convert` | Convert an office document (base64) to PDF |
-| `gotenberg_merge_pdfs` | Merge multiple base64 PDFs into one |
-| `gotenberg_split_pdf` | Split a base64 PDF into parts |
-| `gotenberg_flatten_pdf` | Flatten a base64 PDF |
-| `gotenberg_read_pdf_metadata` | Read metadata from a base64 PDF |
+| `gotenberg_url_to_pdf` | Convert a public URL to a PDF (stores in binary property) |
+| `gotenberg_html_to_pdf` | Convert an HTML string to PDF (stores in binary property) |
+| `gotenberg_url_screenshot` | Take a screenshot of a URL (stores in binary property) |
+| `gotenberg_libreoffice_convert` | Convert an office document to PDF (accepts binary property reference) |
+| `gotenberg_merge_pdfs` | Merge multiple PDFs into one (accepts binary property references) |
+| `gotenberg_split_pdf` | Split a PDF into parts (accepts binary property reference) |
+| `gotenberg_flatten_pdf` | Flatten a PDF (accepts binary property reference) |
+| `gotenberg_read_pdf_metadata` | Read metadata from a PDF (accepts binary property reference) |
+
+All tools use **n8n native binary references** instead of base64. Tools that produce files store them
+in n8n's binary data system and return a `binaryPropertyName`. Tools that consume files accept
+a `binary_property_name` parameter. Compatible with `N8N_DEFAULT_BINARY_DATA_MODE=filesystem` and `database`.
 
 ## Prerequisites
 

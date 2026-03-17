@@ -25,8 +25,8 @@ Full CRUD node covering the complete [Telegram Bot API](https://core.telegram.or
 | Tool | Description |
 |------|-------------|
 | `telegram_send_message` | Send text messages with formatting |
-| `telegram_send_photo` | Send photos (file_id, URL, or base64) |
-| `telegram_send_document` | Send documents/files (base64 compatible with Gotenberg output) |
+| `telegram_send_photo` | Send photos (file_id, URL, or binary property reference) |
+| `telegram_send_document` | Send documents/files (accepts binary property reference from other tools) |
 | `telegram_send_video` | Send videos |
 | `telegram_send_audio` | Send audio files |
 | `telegram_send_voice` | Send voice messages |
@@ -36,7 +36,7 @@ Full CRUD node covering the complete [Telegram Bot API](https://core.telegram.or
 | `telegram_forward_message` | Forward messages between chats |
 | `telegram_edit_message` | Edit sent messages |
 | `telegram_delete_message` | Delete messages |
-| `telegram_get_file` | Download files (returns base64 for cross-tool use) |
+| `telegram_get_file` | Download files (stores in binary property for cross-tool use) |
 | `telegram_send_chat_action` | Show typing/uploading indicators |
 | `telegram_get_chat` | Get chat information |
 | `telegram_send_sticker` | Send stickers |
@@ -51,17 +51,10 @@ Full CRUD node covering the complete [Telegram Bot API](https://core.telegram.or
 
 ## Cross-Tool Data Interop
 
-The AI Tools node uses a standardized data format compatible with other tool nodes (e.g., Gotenberg):
-
-```json
-{
-  "success": true,
-  "filename": "document.pdf",
-  "mimeType": "application/pdf",
-  "sizeKb": 142,
-  "base64": "JVBERi0xLjQ..."
-}
-```
+The AI Tools node uses **n8n native binary references** for file exchange — no base64 in the AI context.
+Tools that produce files store them via `prepareBinaryData` and return a `binaryPropertyName`.
+Tools that consume files accept a `binary_property_name` parameter and read data via `getBinaryDataBuffer`.
+Compatible with `N8N_DEFAULT_BINARY_DATA_MODE=filesystem` and `database`.
 
 **Example workflows with AI Agent:**
 - Download document from Telegram → Convert with Gotenberg → Send back to Telegram
