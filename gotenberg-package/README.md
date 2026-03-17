@@ -88,6 +88,10 @@ Create a **Gotenberg API** credential with:
 3. Connect the **Tool** output to an AI Agent node's **Tools** input
 4. The AI can now generate PDFs, take screenshots, and process documents
 
+## Part of the Assistant Set
+
+This package is also included in the full [@unwarkz/n8n-nodes-assistant-set](https://www.npmjs.com/package/@unwarkz/n8n-nodes-assistant-set) package
+
 ## License
 
 MIT © unwarkz
