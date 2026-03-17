@@ -40,7 +40,8 @@
       "dist/nodes/Mem0/Mem0AiTools.node.js",
       "dist/nodes/gotenberg/Gotenberg.node.js",
       "dist/nodes/gotenberg/GotenbergAiTools.node.js",
-      "dist/nodes/telegram/TelegramBot.node.js"
+      "dist/nodes/telegram/TelegramBot.node.js",
+      "dist/nodes/telegram/TelegramBotAiTools.node.js"
     ]
   },
   "keywords": [
@@ -52,7 +53,10 @@
     "llm",
     "long-term-memory",
     "semantic-search",
-    "vector-database"
+    "vector-database",
+    "telegram",
+    "telegram-bot",
+    "bot-api"
   ],
   "devDependencies": {
     "@types/node": "^18.16.0",

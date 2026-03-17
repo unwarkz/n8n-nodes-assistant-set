@@ -1,0 +1,1168 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.TelegramBotAiTools = void 0;
+
+/**
+ * Load zod for schema definitions (available in n8n's runtime environment).
+ */
+let z = null;
+try { z = require('zod'); } catch (_) { /* no zod */ }
+
+/**
+ * Load DynamicStructuredTool from LangChain (available in n8n's runtime environment).
+ * Falls back to a minimal StructuredTool-compatible shim when not resolvable.
+ */
+let DynamicStructuredTool;
+(function () {
+    const candidates = ['@langchain/core/tools', 'langchain/tools'];
+    for (const mod of candidates) {
+        try {
+            const exported = require(mod);
+            if (exported && exported.DynamicStructuredTool) {
+                DynamicStructuredTool = exported.DynamicStructuredTool;
+                return;
+            }
+        } catch (_) { /* continue */ }
+    }
+    // Minimal shim that satisfies the structured-tool contract used by n8n AI Agent
+    DynamicStructuredTool = class DynamicStructuredToolShim {
+        constructor({ name, description, schema, func }) {
+            this.name = name;
+            this.description = description;
+            this.schema = schema || (z ? z.object({}).passthrough() : null);
+            this.func = func;
+            this.returnDirect = false;
+            this.verbose = false;
+            this.lc_namespace = ['langchain_core', 'tools'];
+            this.lc_serializable = true;
+        }
+        async invoke(input) {
+            const inputObj = typeof input === 'string'
+                ? (() => { try { return JSON.parse(input); } catch (_) { return { input }; } })()
+                : (input || {});
+            return this.func(inputObj);
+        }
+        async call(arg, _configArg) {
+            return this.invoke(arg);
+        }
+        _type() { return 'structured'; }
+    };
+})();
+
+// ── Helpers ─────────────────────────────────────────────────────────────────
+
+async function telegramApiPost(ctx, method, body) {
+    const credentials = await ctx.getCredentials('telegramBotApi');
+    const baseUrl = (credentials.baseUrl || 'https://api.telegram.org').replace(/\/$/, '');
+    const token = credentials.botToken;
+    const options = {
+        method: 'POST',
+        url: `${baseUrl}/bot${token}/${method}`,
+        body,
+        json: true,
+    };
+    return ctx.helpers.request(options);
+}
+
+async function telegramApiMultipart(ctx, method, formData) {
+    const credentials = await ctx.getCredentials('telegramBotApi');
+    const baseUrl = (credentials.baseUrl || 'https://api.telegram.org').replace(/\/$/, '');
+    const token = credentials.botToken;
+    const options = {
+        method: 'POST',
+        url: `${baseUrl}/bot${token}/${method}`,
+        formData,
+        json: true,
+    };
+    return ctx.helpers.request(options);
+}
+
+async function downloadTelegramFile(ctx, filePath) {
+    const credentials = await ctx.getCredentials('telegramBotApi');
+    const baseUrl = (credentials.baseUrl || 'https://api.telegram.org').replace(/\/$/, '');
+    const token = credentials.botToken;
+    const options = {
+        method: 'GET',
+        url: `${baseUrl}/file/bot${token}/${filePath}`,
+        encoding: null,
+    };
+    return ctx.helpers.request(options);
+}
+
+function bufferToBase64Result(buf, filename, mimeType) {
+    const b64 = Buffer.isBuffer(buf) ? buf.toString('base64') : Buffer.from(buf).toString('base64');
+    const sizeKb = Math.round((b64.length * 3 / 4) / 1024);
+    return JSON.stringify({
+        success: true,
+        filename,
+        mimeType,
+        sizeKb,
+        base64: b64,
+    });
+}
+
+function guessMimeType(filePath) {
+    const ext = (filePath || '').split('.').pop().toLowerCase();
+    const map = {
+        jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', gif: 'image/gif',
+        webp: 'image/webp', svg: 'image/svg+xml', bmp: 'image/bmp',
+        pdf: 'application/pdf', doc: 'application/msword',
+        docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        xls: 'application/vnd.ms-excel',
+        xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        ppt: 'application/vnd.ms-powerpoint',
+        pptx: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+        zip: 'application/zip', mp3: 'audio/mpeg', mp4: 'video/mp4',
+        ogg: 'audio/ogg', wav: 'audio/wav', webm: 'video/webm',
+        txt: 'text/plain', csv: 'text/csv', json: 'application/json',
+    };
+    return map[ext] || 'application/octet-stream';
+}
+
+function isBase64(str) {
+    if (!str || typeof str !== 'string') return false;
+    if (str.startsWith('http://') || str.startsWith('https://')) return false;
+    if (str.length < 50) return false;
+    const raw = str.includes(',') ? str.split(',')[1] : str;
+    return /^[A-Za-z0-9+/\n\r]+=*$/.test(raw.slice(0, 200));
+}
+
+function base64ToBuffer(b64) {
+    const raw = b64.includes(',') ? b64.split(',')[1] : b64;
+    return Buffer.from(raw, 'base64');
+}
+
+// ── Node Class ──────────────────────────────────────────────────────────────
+
+class TelegramBotAiTools {
+    constructor() {
+        this.description = {
+            displayName: 'Telegram Bot AI Tools',
+            name: 'telegramBotAiTools',
+            icon: 'file:telegram.svg',
+            group: ['transform'],
+            version: 1,
+            description: 'Provides Telegram Bot API tools (send messages, photos, documents, get files…) to an AI Agent node',
+            defaults: { name: 'Telegram Bot AI Tools' },
+            inputs: [],
+            outputs: ['ai_tool'],
+            outputNames: ['Tool'],
+            credentials: [{ name: 'telegramBotApi', required: true }],
+            codex: {
+                categories: ['AI'],
+                subcategories: {
+                    AI: ['Tools', 'Agents & LLMs'],
+                },
+                resources: {
+                    primaryDocumentation: [{ url: 'https://core.telegram.org/bots/api' }],
+                },
+            },
+            properties: [
+                {
+                    displayName: 'Tools to Enable',
+                    name: 'enabledTools',
+                    type: 'multiOptions',
+                    options: [
+                        { name: 'Send Message', value: 'sendMessage', description: 'Send a text message to a chat' },
+                        { name: 'Send Photo', value: 'sendPhoto', description: 'Send a photo to a chat' },
+                        { name: 'Send Document', value: 'sendDocument', description: 'Send a document/file to a chat (supports base64 input from other tools)' },
+                        { name: 'Send Video', value: 'sendVideo', description: 'Send a video to a chat' },
+                        { name: 'Send Audio', value: 'sendAudio', description: 'Send an audio file to a chat' },
+                        { name: 'Send Voice', value: 'sendVoice', description: 'Send a voice message to a chat' },
+                        { name: 'Send Location', value: 'sendLocation', description: 'Send a location to a chat' },
+                        { name: 'Send Contact', value: 'sendContact', description: 'Send a contact to a chat' },
+                        { name: 'Send Poll', value: 'sendPoll', description: 'Send a poll to a chat' },
+                        { name: 'Forward Message', value: 'forwardMessage', description: 'Forward a message from one chat to another' },
+                        { name: 'Edit Message', value: 'editMessage', description: 'Edit an existing text message' },
+                        { name: 'Delete Message', value: 'deleteMessage', description: 'Delete a message from a chat' },
+                        { name: 'Get File', value: 'getFile', description: 'Download a file from Telegram by file_id (returns base64)' },
+                        { name: 'Send Chat Action', value: 'sendChatAction', description: 'Show typing or upload status in a chat' },
+                        { name: 'Get Chat', value: 'getChat', description: 'Get information about a chat' },
+                        { name: 'Send Sticker', value: 'sendSticker', description: 'Send a sticker to a chat' },
+                        { name: 'Send Media Group', value: 'sendMediaGroup', description: 'Send a group of photos/documents as an album' },
+                        { name: 'Answer Inline Query', value: 'answerInlineQuery', description: 'Answer an inline query from a user' },
+                        { name: 'Pin Message', value: 'pinMessage', description: 'Pin a message in a chat' },
+                        { name: 'Unpin Message', value: 'unpinMessage', description: 'Unpin a message in a chat' },
+                        { name: 'Send Invoice', value: 'sendInvoice', description: 'Send an invoice for payments' },
+                        { name: 'Get Me', value: 'getMe', description: 'Get bot information' },
+                        { name: 'Set Webhook', value: 'setWebhook', description: 'Set the webhook URL for the bot' },
+                        { name: 'Delete Webhook', value: 'deleteWebhook', description: 'Delete the webhook for the bot' },
+                    ],
+                    default: ['sendMessage', 'sendPhoto', 'sendDocument', 'getFile', 'forwardMessage', 'sendChatAction', 'editMessage', 'deleteMessage'],
+                    description: 'Which Telegram Bot tools to expose to the AI Agent',
+                },
+                {
+                    displayName: 'Tool Description Override',
+                    name: 'toolDescription',
+                    type: 'string',
+                    default: '',
+                    description: 'Optional: override the description shown to the AI Agent for all tools',
+                    typeOptions: { rows: 2 },
+                },
+            ],
+        };
+    }
+
+    async supplyData(itemIndex) {
+        const self = this;
+        const enabledTools = this.getNodeParameter('enabledTools', itemIndex, ['sendMessage', 'sendPhoto', 'sendDocument', 'getFile', 'forwardMessage', 'sendChatAction', 'editMessage', 'deleteMessage']);
+        const toolDescriptionOverride = this.getNodeParameter('toolDescription', itemIndex, '');
+
+        function log(level, message, meta) {
+            try {
+                if (self.logger && typeof self.logger[level] === 'function') {
+                    self.logger[level](message, meta);
+                }
+            } catch (_) { /* ignore */ }
+        }
+
+        function startToolRun(payload) {
+            try {
+                const { index } = self.addInputData('ai_tool', [[{ json: payload }]]);
+                return index;
+            } catch (_) { return 0; }
+        }
+
+        function endToolRun(runIndex, data) {
+            try {
+                const logData = data && typeof data === 'object' && data.base64
+                    ? { ...data, base64: `[base64, ${data.sizeKb}kb]` }
+                    : data;
+                const json = (logData !== null && typeof logData === 'object' && !Array.isArray(logData))
+                    ? logData
+                    : { result: logData };
+                self.addOutputData('ai_tool', runIndex, [[{ json }]]);
+            } catch (_) { /* addOutputData may not be available in all n8n versions */ }
+        }
+
+        function strOpt(desc) { return z ? z.string().optional().describe(desc) : undefined; }
+        function boolOpt(desc) { return z ? z.boolean().optional().describe(desc) : undefined; }
+        function numOpt(desc) { return z ? z.number().optional().describe(desc) : undefined; }
+
+        const tools = [];
+
+        // ── Tool: telegram_send_message ────────────────────────────────────
+        if (enabledTools.includes('sendMessage')) {
+            tools.push(new DynamicStructuredTool({
+                name: 'telegram_send_message',
+                description: toolDescriptionOverride ||
+                    'Send a text message to a Telegram chat. Supports HTML, MarkdownV2, and Markdown formatting. ' +
+                    'Returns the sent message object from Telegram API. ' +
+                    'Use this when the user asks to send a text message, notification, or alert to a Telegram chat or user.',
+                schema: z ? z.object({
+                    chat_id: z.string().describe('The chat ID or @username to send the message to'),
+                    text: z.string().describe('The message text to send'),
+                    parse_mode: strOpt('Formatting mode: "HTML" | "MarkdownV2" | "Markdown"'),
+                    disable_notification: boolOpt('Send silently without notification sound (default: false)'),
+                    reply_to_message_id: numOpt('Message ID to reply to'),
+                    reply_markup: strOpt('JSON string of inline keyboard or reply markup'),
+                }) : null,
+                func: async ({ chat_id, text, parse_mode, disable_notification, reply_to_message_id, reply_markup } = {}) => {
+                    const runIndex = startToolRun({ tool: 'telegram_send_message', chat_id });
+                    log('debug', '[Telegram] telegram_send_message called', { chat_id });
+                    try {
+                        if (!chat_id) return JSON.stringify({ error: 'chat_id is required' });
+                        if (!text) return JSON.stringify({ error: 'text is required' });
+                        const body = { chat_id, text };
+                        if (parse_mode) body.parse_mode = parse_mode;
+                        if (disable_notification !== undefined) body.disable_notification = disable_notification;
+                        if (reply_to_message_id) body.reply_to_message_id = reply_to_message_id;
+                        if (reply_markup) {
+                            try { body.reply_markup = JSON.parse(reply_markup); } catch (_) { body.reply_markup = reply_markup; }
+                        }
+                        const result = await telegramApiPost(self, 'sendMessage', body);
+                        const resultStr = JSON.stringify({ success: true, result });
+                        endToolRun(runIndex, { success: true, message_id: result && result.result && result.result.message_id });
+                        return resultStr;
+                    } catch (err) {
+                        const errObj = { error: err.message || String(err) };
+                        log('error', '[Telegram] telegram_send_message failed', errObj);
+                        endToolRun(runIndex, errObj);
+                        return JSON.stringify(errObj);
+                    }
+                },
+            }));
+        }
+
+        // ── Tool: telegram_send_photo ─────────────────────────────────────
+        if (enabledTools.includes('sendPhoto')) {
+            tools.push(new DynamicStructuredTool({
+                name: 'telegram_send_photo',
+                description: toolDescriptionOverride ||
+                    'Send a photo to a Telegram chat. Accepts a file_id, a public HTTP URL, or a base64-encoded image string. ' +
+                    'When base64 is provided, the image is uploaded as multipart form data. ' +
+                    'Compatible with base64 output from gotenberg_url_screenshot or other tools that return base64 images. ' +
+                    'Returns the sent message object.',
+                schema: z ? z.object({
+                    chat_id: z.string().describe('The chat ID or @username to send the photo to'),
+                    photo: z.string().describe('Photo to send: a file_id, a public HTTP URL, or a base64-encoded image string'),
+                    caption: strOpt('Photo caption (0-1024 characters)'),
+                    parse_mode: strOpt('Caption formatting: "HTML" | "MarkdownV2" | "Markdown"'),
+                    filename: strOpt('Filename when uploading base64 (default: "photo.jpg")'),
+                }) : null,
+                func: async ({ chat_id, photo, caption, parse_mode, filename } = {}) => {
+                    const runIndex = startToolRun({ tool: 'telegram_send_photo', chat_id });
+                    log('debug', '[Telegram] telegram_send_photo called', { chat_id });
+                    try {
+                        if (!chat_id) return JSON.stringify({ error: 'chat_id is required' });
+                        if (!photo) return JSON.stringify({ error: 'photo is required' });
+                        let result;
+                        if (isBase64(photo)) {
+                            const buf = base64ToBuffer(photo);
+                            const fname = filename || 'photo.jpg';
+                            const formData = {
+                                chat_id,
+                                photo: { value: buf, options: { filename: fname, contentType: 'image/jpeg' } },
+                            };
+                            if (caption) formData.caption = caption;
+                            if (parse_mode) formData.parse_mode = parse_mode;
+                            result = await telegramApiMultipart(self, 'sendPhoto', formData);
+                        } else {
+                            const body = { chat_id, photo };
+                            if (caption) body.caption = caption;
+                            if (parse_mode) body.parse_mode = parse_mode;
+                            result = await telegramApiPost(self, 'sendPhoto', body);
+                        }
+                        const resultStr = JSON.stringify({ success: true, result });
+                        endToolRun(runIndex, { success: true });
+                        return resultStr;
+                    } catch (err) {
+                        const errObj = { error: err.message || String(err) };
+                        log('error', '[Telegram] telegram_send_photo failed', errObj);
+                        endToolRun(runIndex, errObj);
+                        return JSON.stringify(errObj);
+                    }
+                },
+            }));
+        }
+
+        // ── Tool: telegram_send_document ──────────────────────────────────
+        if (enabledTools.includes('sendDocument')) {
+            tools.push(new DynamicStructuredTool({
+                name: 'telegram_send_document',
+                description: toolDescriptionOverride ||
+                    'Send a document/file to a Telegram chat. Accepts base64-encoded file content. ' +
+                    'Compatible with output from gotenberg_url_to_pdf, gotenberg_html_to_pdf, gotenberg_libreoffice_convert, ' +
+                    'gotenberg_merge_pdfs, and any other tool that returns base64 data. ' +
+                    'Pass the base64 string from those tools directly as document_base64. ' +
+                    'Returns the sent message object.',
+                schema: z ? z.object({
+                    chat_id: z.string().describe('The chat ID or @username to send the document to'),
+                    document_base64: z.string().describe('Base64-encoded file content to send as a document'),
+                    filename: z.string().describe('Filename with extension (e.g., "report.pdf", "data.xlsx")'),
+                    caption: strOpt('Document caption (0-1024 characters)'),
+                    parse_mode: strOpt('Caption formatting: "HTML" | "MarkdownV2" | "Markdown"'),
+                    mime_type: strOpt('MIME type of the file (auto-detected from filename if omitted)'),
+                }) : null,
+                func: async ({ chat_id, document_base64, filename, caption, parse_mode, mime_type } = {}) => {
+                    const runIndex = startToolRun({ tool: 'telegram_send_document', chat_id, filename });
+                    log('debug', '[Telegram] telegram_send_document called', { chat_id, filename });
+                    try {
+                        if (!chat_id) return JSON.stringify({ error: 'chat_id is required' });
+                        if (!document_base64) return JSON.stringify({ error: 'document_base64 is required' });
+                        if (!filename) return JSON.stringify({ error: 'filename is required' });
+                        const buf = base64ToBuffer(document_base64);
+                        const contentType = mime_type || guessMimeType(filename);
+                        const formData = {
+                            chat_id,
+                            document: { value: buf, options: { filename, contentType } },
+                        };
+                        if (caption) formData.caption = caption;
+                        if (parse_mode) formData.parse_mode = parse_mode;
+                        const result = await telegramApiMultipart(self, 'sendDocument', formData);
+                        const resultStr = JSON.stringify({ success: true, result });
+                        endToolRun(runIndex, { success: true, filename });
+                        return resultStr;
+                    } catch (err) {
+                        const errObj = { error: err.message || String(err) };
+                        log('error', '[Telegram] telegram_send_document failed', errObj);
+                        endToolRun(runIndex, errObj);
+                        return JSON.stringify(errObj);
+                    }
+                },
+            }));
+        }
+
+        // ── Tool: telegram_send_video ─────────────────────────────────────
+        if (enabledTools.includes('sendVideo')) {
+            tools.push(new DynamicStructuredTool({
+                name: 'telegram_send_video',
+                description: toolDescriptionOverride ||
+                    'Send a video to a Telegram chat. Accepts a file_id, a public HTTP URL, or a base64-encoded video string. ' +
+                    'Returns the sent message object.',
+                schema: z ? z.object({
+                    chat_id: z.string().describe('The chat ID or @username to send the video to'),
+                    video: z.string().describe('Video to send: a file_id, a public HTTP URL, or a base64-encoded video string'),
+                    caption: strOpt('Video caption (0-1024 characters)'),
+                    filename: strOpt('Filename when uploading base64 (default: "video.mp4")'),
+                }) : null,
+                func: async ({ chat_id, video, caption, filename } = {}) => {
+                    const runIndex = startToolRun({ tool: 'telegram_send_video', chat_id });
+                    log('debug', '[Telegram] telegram_send_video called', { chat_id });
+                    try {
+                        if (!chat_id) return JSON.stringify({ error: 'chat_id is required' });
+                        if (!video) return JSON.stringify({ error: 'video is required' });
+                        let result;
+                        if (isBase64(video)) {
+                            const buf = base64ToBuffer(video);
+                            const fname = filename || 'video.mp4';
+                            const formData = {
+                                chat_id,
+                                video: { value: buf, options: { filename: fname, contentType: 'video/mp4' } },
+                            };
+                            if (caption) formData.caption = caption;
+                            result = await telegramApiMultipart(self, 'sendVideo', formData);
+                        } else {
+                            const body = { chat_id, video };
+                            if (caption) body.caption = caption;
+                            result = await telegramApiPost(self, 'sendVideo', body);
+                        }
+                        const resultStr = JSON.stringify({ success: true, result });
+                        endToolRun(runIndex, { success: true });
+                        return resultStr;
+                    } catch (err) {
+                        const errObj = { error: err.message || String(err) };
+                        log('error', '[Telegram] telegram_send_video failed', errObj);
+                        endToolRun(runIndex, errObj);
+                        return JSON.stringify(errObj);
+                    }
+                },
+            }));
+        }
+
+        // ── Tool: telegram_send_audio ─────────────────────────────────────
+        if (enabledTools.includes('sendAudio')) {
+            tools.push(new DynamicStructuredTool({
+                name: 'telegram_send_audio',
+                description: toolDescriptionOverride ||
+                    'Send an audio file to a Telegram chat. Accepts a file_id, a public HTTP URL, or a base64-encoded audio string. ' +
+                    'Returns the sent message object.',
+                schema: z ? z.object({
+                    chat_id: z.string().describe('The chat ID or @username to send the audio to'),
+                    audio: z.string().describe('Audio to send: a file_id, a public HTTP URL, or a base64-encoded audio string'),
+                    caption: strOpt('Audio caption (0-1024 characters)'),
+                    filename: strOpt('Filename when uploading base64 (default: "audio.mp3")'),
+                }) : null,
+                func: async ({ chat_id, audio, caption, filename } = {}) => {
+                    const runIndex = startToolRun({ tool: 'telegram_send_audio', chat_id });
+                    log('debug', '[Telegram] telegram_send_audio called', { chat_id });
+                    try {
+                        if (!chat_id) return JSON.stringify({ error: 'chat_id is required' });
+                        if (!audio) return JSON.stringify({ error: 'audio is required' });
+                        let result;
+                        if (isBase64(audio)) {
+                            const buf = base64ToBuffer(audio);
+                            const fname = filename || 'audio.mp3';
+                            const formData = {
+                                chat_id,
+                                audio: { value: buf, options: { filename: fname, contentType: 'audio/mpeg' } },
+                            };
+                            if (caption) formData.caption = caption;
+                            result = await telegramApiMultipart(self, 'sendAudio', formData);
+                        } else {
+                            const body = { chat_id, audio };
+                            if (caption) body.caption = caption;
+                            result = await telegramApiPost(self, 'sendAudio', body);
+                        }
+                        const resultStr = JSON.stringify({ success: true, result });
+                        endToolRun(runIndex, { success: true });
+                        return resultStr;
+                    } catch (err) {
+                        const errObj = { error: err.message || String(err) };
+                        log('error', '[Telegram] telegram_send_audio failed', errObj);
+                        endToolRun(runIndex, errObj);
+                        return JSON.stringify(errObj);
+                    }
+                },
+            }));
+        }
+
+        // ── Tool: telegram_send_voice ─────────────────────────────────────
+        if (enabledTools.includes('sendVoice')) {
+            tools.push(new DynamicStructuredTool({
+                name: 'telegram_send_voice',
+                description: toolDescriptionOverride ||
+                    'Send a voice message to a Telegram chat. Accepts a file_id, a public HTTP URL, or a base64-encoded OGG audio. ' +
+                    'Returns the sent message object.',
+                schema: z ? z.object({
+                    chat_id: z.string().describe('The chat ID or @username to send the voice message to'),
+                    voice: z.string().describe('Voice to send: a file_id, a public HTTP URL, or a base64-encoded OGG audio string'),
+                    caption: strOpt('Voice message caption (0-1024 characters)'),
+                }) : null,
+                func: async ({ chat_id, voice, caption } = {}) => {
+                    const runIndex = startToolRun({ tool: 'telegram_send_voice', chat_id });
+                    log('debug', '[Telegram] telegram_send_voice called', { chat_id });
+                    try {
+                        if (!chat_id) return JSON.stringify({ error: 'chat_id is required' });
+                        if (!voice) return JSON.stringify({ error: 'voice is required' });
+                        let result;
+                        if (isBase64(voice)) {
+                            const buf = base64ToBuffer(voice);
+                            const formData = {
+                                chat_id,
+                                voice: { value: buf, options: { filename: 'voice.ogg', contentType: 'audio/ogg' } },
+                            };
+                            if (caption) formData.caption = caption;
+                            result = await telegramApiMultipart(self, 'sendVoice', formData);
+                        } else {
+                            const body = { chat_id, voice };
+                            if (caption) body.caption = caption;
+                            result = await telegramApiPost(self, 'sendVoice', body);
+                        }
+                        const resultStr = JSON.stringify({ success: true, result });
+                        endToolRun(runIndex, { success: true });
+                        return resultStr;
+                    } catch (err) {
+                        const errObj = { error: err.message || String(err) };
+                        log('error', '[Telegram] telegram_send_voice failed', errObj);
+                        endToolRun(runIndex, errObj);
+                        return JSON.stringify(errObj);
+                    }
+                },
+            }));
+        }
+
+        // ── Tool: telegram_send_location ──────────────────────────────────
+        if (enabledTools.includes('sendLocation')) {
+            tools.push(new DynamicStructuredTool({
+                name: 'telegram_send_location',
+                description: toolDescriptionOverride ||
+                    'Send a location (latitude/longitude) to a Telegram chat. Returns the sent message object.',
+                schema: z ? z.object({
+                    chat_id: z.string().describe('The chat ID or @username to send the location to'),
+                    latitude: z.number().describe('Latitude of the location'),
+                    longitude: z.number().describe('Longitude of the location'),
+                }) : null,
+                func: async ({ chat_id, latitude, longitude } = {}) => {
+                    const runIndex = startToolRun({ tool: 'telegram_send_location', chat_id });
+                    log('debug', '[Telegram] telegram_send_location called', { chat_id });
+                    try {
+                        if (!chat_id) return JSON.stringify({ error: 'chat_id is required' });
+                        if (latitude === undefined) return JSON.stringify({ error: 'latitude is required' });
+                        if (longitude === undefined) return JSON.stringify({ error: 'longitude is required' });
+                        const body = { chat_id, latitude, longitude };
+                        const result = await telegramApiPost(self, 'sendLocation', body);
+                        const resultStr = JSON.stringify({ success: true, result });
+                        endToolRun(runIndex, { success: true });
+                        return resultStr;
+                    } catch (err) {
+                        const errObj = { error: err.message || String(err) };
+                        log('error', '[Telegram] telegram_send_location failed', errObj);
+                        endToolRun(runIndex, errObj);
+                        return JSON.stringify(errObj);
+                    }
+                },
+            }));
+        }
+
+        // ── Tool: telegram_send_contact ───────────────────────────────────
+        if (enabledTools.includes('sendContact')) {
+            tools.push(new DynamicStructuredTool({
+                name: 'telegram_send_contact',
+                description: toolDescriptionOverride ||
+                    'Send a phone contact to a Telegram chat. Returns the sent message object.',
+                schema: z ? z.object({
+                    chat_id: z.string().describe('The chat ID or @username to send the contact to'),
+                    phone_number: z.string().describe('Contact phone number'),
+                    first_name: z.string().describe('Contact first name'),
+                    last_name: strOpt('Contact last name'),
+                }) : null,
+                func: async ({ chat_id, phone_number, first_name, last_name } = {}) => {
+                    const runIndex = startToolRun({ tool: 'telegram_send_contact', chat_id });
+                    log('debug', '[Telegram] telegram_send_contact called', { chat_id });
+                    try {
+                        if (!chat_id) return JSON.stringify({ error: 'chat_id is required' });
+                        if (!phone_number) return JSON.stringify({ error: 'phone_number is required' });
+                        if (!first_name) return JSON.stringify({ error: 'first_name is required' });
+                        const body = { chat_id, phone_number, first_name };
+                        if (last_name) body.last_name = last_name;
+                        const result = await telegramApiPost(self, 'sendContact', body);
+                        const resultStr = JSON.stringify({ success: true, result });
+                        endToolRun(runIndex, { success: true });
+                        return resultStr;
+                    } catch (err) {
+                        const errObj = { error: err.message || String(err) };
+                        log('error', '[Telegram] telegram_send_contact failed', errObj);
+                        endToolRun(runIndex, errObj);
+                        return JSON.stringify(errObj);
+                    }
+                },
+            }));
+        }
+
+        // ── Tool: telegram_send_poll ──────────────────────────────────────
+        if (enabledTools.includes('sendPoll')) {
+            tools.push(new DynamicStructuredTool({
+                name: 'telegram_send_poll',
+                description: toolDescriptionOverride ||
+                    'Send a poll to a Telegram chat. The options parameter must be a JSON array of strings. Returns the sent message object.',
+                schema: z ? z.object({
+                    chat_id: z.string().describe('The chat ID or @username to send the poll to'),
+                    question: z.string().describe('Poll question (1-300 characters)'),
+                    options: z.string().describe('JSON array of answer options, e.g. \'["Option A","Option B","Option C"]\' (2-10 options)'),
+                    is_anonymous: boolOpt('Whether the poll is anonymous (default: true)'),
+                    type: strOpt('Poll type: "regular" | "quiz" (default: "regular")'),
+                }) : null,
+                func: async ({ chat_id, question, options, is_anonymous, type } = {}) => {
+                    const runIndex = startToolRun({ tool: 'telegram_send_poll', chat_id });
+                    log('debug', '[Telegram] telegram_send_poll called', { chat_id });
+                    try {
+                        if (!chat_id) return JSON.stringify({ error: 'chat_id is required' });
+                        if (!question) return JSON.stringify({ error: 'question is required' });
+                        if (!options) return JSON.stringify({ error: 'options is required' });
+                        let parsedOptions;
+                        try { parsedOptions = JSON.parse(options); } catch (_) {
+                            return JSON.stringify({ error: 'options must be a valid JSON array of strings' });
+                        }
+                        const body = { chat_id, question, options: parsedOptions };
+                        if (is_anonymous !== undefined) body.is_anonymous = is_anonymous;
+                        if (type) body.type = type;
+                        const result = await telegramApiPost(self, 'sendPoll', body);
+                        const resultStr = JSON.stringify({ success: true, result });
+                        endToolRun(runIndex, { success: true });
+                        return resultStr;
+                    } catch (err) {
+                        const errObj = { error: err.message || String(err) };
+                        log('error', '[Telegram] telegram_send_poll failed', errObj);
+                        endToolRun(runIndex, errObj);
+                        return JSON.stringify(errObj);
+                    }
+                },
+            }));
+        }
+
+        // ── Tool: telegram_forward_message ────────────────────────────────
+        if (enabledTools.includes('forwardMessage')) {
+            tools.push(new DynamicStructuredTool({
+                name: 'telegram_forward_message',
+                description: toolDescriptionOverride ||
+                    'Forward an existing message from one Telegram chat to another. Returns the forwarded message object.',
+                schema: z ? z.object({
+                    chat_id: z.string().describe('Target chat ID or @username to forward the message to'),
+                    from_chat_id: z.string().describe('Source chat ID or @username where the original message is'),
+                    message_id: z.number().describe('Message ID to forward'),
+                }) : null,
+                func: async ({ chat_id, from_chat_id, message_id } = {}) => {
+                    const runIndex = startToolRun({ tool: 'telegram_forward_message', chat_id });
+                    log('debug', '[Telegram] telegram_forward_message called', { chat_id, from_chat_id, message_id });
+                    try {
+                        if (!chat_id) return JSON.stringify({ error: 'chat_id is required' });
+                        if (!from_chat_id) return JSON.stringify({ error: 'from_chat_id is required' });
+                        if (!message_id) return JSON.stringify({ error: 'message_id is required' });
+                        const body = { chat_id, from_chat_id, message_id };
+                        const result = await telegramApiPost(self, 'forwardMessage', body);
+                        const resultStr = JSON.stringify({ success: true, result });
+                        endToolRun(runIndex, { success: true });
+                        return resultStr;
+                    } catch (err) {
+                        const errObj = { error: err.message || String(err) };
+                        log('error', '[Telegram] telegram_forward_message failed', errObj);
+                        endToolRun(runIndex, errObj);
+                        return JSON.stringify(errObj);
+                    }
+                },
+            }));
+        }
+
+        // ── Tool: telegram_edit_message ───────────────────────────────────
+        if (enabledTools.includes('editMessage')) {
+            tools.push(new DynamicStructuredTool({
+                name: 'telegram_edit_message',
+                description: toolDescriptionOverride ||
+                    'Edit the text of an existing message in a Telegram chat. Returns the edited message object.',
+                schema: z ? z.object({
+                    chat_id: z.string().describe('The chat ID or @username of the chat containing the message'),
+                    message_id: z.number().describe('ID of the message to edit'),
+                    text: z.string().describe('New text for the message'),
+                    parse_mode: strOpt('Formatting mode: "HTML" | "MarkdownV2" | "Markdown"'),
+                }) : null,
+                func: async ({ chat_id, message_id, text, parse_mode } = {}) => {
+                    const runIndex = startToolRun({ tool: 'telegram_edit_message', chat_id, message_id });
+                    log('debug', '[Telegram] telegram_edit_message called', { chat_id, message_id });
+                    try {
+                        if (!chat_id) return JSON.stringify({ error: 'chat_id is required' });
+                        if (!message_id) return JSON.stringify({ error: 'message_id is required' });
+                        if (!text) return JSON.stringify({ error: 'text is required' });
+                        const body = { chat_id, message_id, text };
+                        if (parse_mode) body.parse_mode = parse_mode;
+                        const result = await telegramApiPost(self, 'editMessageText', body);
+                        const resultStr = JSON.stringify({ success: true, result });
+                        endToolRun(runIndex, { success: true });
+                        return resultStr;
+                    } catch (err) {
+                        const errObj = { error: err.message || String(err) };
+                        log('error', '[Telegram] telegram_edit_message failed', errObj);
+                        endToolRun(runIndex, errObj);
+                        return JSON.stringify(errObj);
+                    }
+                },
+            }));
+        }
+
+        // ── Tool: telegram_delete_message ─────────────────────────────────
+        if (enabledTools.includes('deleteMessage')) {
+            tools.push(new DynamicStructuredTool({
+                name: 'telegram_delete_message',
+                description: toolDescriptionOverride ||
+                    'Delete a message from a Telegram chat. Returns success status.',
+                schema: z ? z.object({
+                    chat_id: z.string().describe('The chat ID or @username of the chat containing the message'),
+                    message_id: z.number().describe('ID of the message to delete'),
+                }) : null,
+                func: async ({ chat_id, message_id } = {}) => {
+                    const runIndex = startToolRun({ tool: 'telegram_delete_message', chat_id, message_id });
+                    log('debug', '[Telegram] telegram_delete_message called', { chat_id, message_id });
+                    try {
+                        if (!chat_id) return JSON.stringify({ error: 'chat_id is required' });
+                        if (!message_id) return JSON.stringify({ error: 'message_id is required' });
+                        const body = { chat_id, message_id };
+                        const result = await telegramApiPost(self, 'deleteMessage', body);
+                        const resultStr = JSON.stringify({ success: true, result });
+                        endToolRun(runIndex, { success: true });
+                        return resultStr;
+                    } catch (err) {
+                        const errObj = { error: err.message || String(err) };
+                        log('error', '[Telegram] telegram_delete_message failed', errObj);
+                        endToolRun(runIndex, errObj);
+                        return JSON.stringify(errObj);
+                    }
+                },
+            }));
+        }
+
+        // ── Tool: telegram_get_file ───────────────────────────────────────
+        if (enabledTools.includes('getFile')) {
+            tools.push(new DynamicStructuredTool({
+                name: 'telegram_get_file',
+                description: toolDescriptionOverride ||
+                    'Download a file from Telegram servers by file_id. Returns JSON with {success, filename, mimeType, sizeKb, base64}. ' +
+                    'The base64 string can be passed directly to gotenberg_libreoffice_convert, gotenberg_merge_pdfs, ' +
+                    'telegram_send_document, or any other tool that accepts base64 input for document conversion or forwarding.',
+                schema: z ? z.object({
+                    file_id: z.string().describe('The file_id obtained from a Telegram message (e.g., from a document, photo, audio, video message)'),
+                }) : null,
+                func: async ({ file_id } = {}) => {
+                    const runIndex = startToolRun({ tool: 'telegram_get_file', file_id });
+                    log('debug', '[Telegram] telegram_get_file called', { file_id });
+                    try {
+                        if (!file_id) return JSON.stringify({ error: 'file_id is required' });
+                        const fileInfo = await telegramApiPost(self, 'getFile', { file_id });
+                        const filePath = fileInfo && fileInfo.result && fileInfo.result.file_path;
+                        if (!filePath) return JSON.stringify({ error: 'Could not get file path from Telegram' });
+                        const fileBuffer = await downloadTelegramFile(self, filePath);
+                        const filename = filePath.split('/').pop() || 'file';
+                        const mimeType = guessMimeType(filename);
+                        const resultStr = bufferToBase64Result(fileBuffer, filename, mimeType);
+                        const result = JSON.parse(resultStr);
+                        log('info', '[Telegram] telegram_get_file succeeded', { file_id, filename, sizeKb: result.sizeKb });
+                        endToolRun(runIndex, { success: true, filename, sizeKb: result.sizeKb });
+                        return resultStr;
+                    } catch (err) {
+                        const errObj = { error: err.message || String(err) };
+                        log('error', '[Telegram] telegram_get_file failed', errObj);
+                        endToolRun(runIndex, errObj);
+                        return JSON.stringify(errObj);
+                    }
+                },
+            }));
+        }
+
+        // ── Tool: telegram_send_chat_action ───────────────────────────────
+        if (enabledTools.includes('sendChatAction')) {
+            tools.push(new DynamicStructuredTool({
+                name: 'telegram_send_chat_action',
+                description: toolDescriptionOverride ||
+                    'Send a chat action (typing indicator, upload status, etc.) to a Telegram chat. ' +
+                    'Use this before sending a message to show the bot is working. Returns success status.',
+                schema: z ? z.object({
+                    chat_id: z.string().describe('The chat ID or @username to send the action to'),
+                    action: z.string().describe('Action type: "typing" | "upload_photo" | "upload_document" | "upload_video" | "record_voice" | "record_video" | "find_location" | "upload_voice" | "upload_video_note"'),
+                }) : null,
+                func: async ({ chat_id, action } = {}) => {
+                    const runIndex = startToolRun({ tool: 'telegram_send_chat_action', chat_id, action });
+                    log('debug', '[Telegram] telegram_send_chat_action called', { chat_id, action });
+                    try {
+                        if (!chat_id) return JSON.stringify({ error: 'chat_id is required' });
+                        if (!action) return JSON.stringify({ error: 'action is required' });
+                        const body = { chat_id, action };
+                        const result = await telegramApiPost(self, 'sendChatAction', body);
+                        const resultStr = JSON.stringify({ success: true, result });
+                        endToolRun(runIndex, { success: true });
+                        return resultStr;
+                    } catch (err) {
+                        const errObj = { error: err.message || String(err) };
+                        log('error', '[Telegram] telegram_send_chat_action failed', errObj);
+                        endToolRun(runIndex, errObj);
+                        return JSON.stringify(errObj);
+                    }
+                },
+            }));
+        }
+
+        // ── Tool: telegram_get_chat ───────────────────────────────────────
+        if (enabledTools.includes('getChat')) {
+            tools.push(new DynamicStructuredTool({
+                name: 'telegram_get_chat',
+                description: toolDescriptionOverride ||
+                    'Get information about a Telegram chat (title, type, member count, description, etc.). Returns the chat object.',
+                schema: z ? z.object({
+                    chat_id: z.string().describe('The chat ID or @username to get info about'),
+                }) : null,
+                func: async ({ chat_id } = {}) => {
+                    const runIndex = startToolRun({ tool: 'telegram_get_chat', chat_id });
+                    log('debug', '[Telegram] telegram_get_chat called', { chat_id });
+                    try {
+                        if (!chat_id) return JSON.stringify({ error: 'chat_id is required' });
+                        const result = await telegramApiPost(self, 'getChat', { chat_id });
+                        const resultStr = JSON.stringify({ success: true, result });
+                        endToolRun(runIndex, { success: true });
+                        return resultStr;
+                    } catch (err) {
+                        const errObj = { error: err.message || String(err) };
+                        log('error', '[Telegram] telegram_get_chat failed', errObj);
+                        endToolRun(runIndex, errObj);
+                        return JSON.stringify(errObj);
+                    }
+                },
+            }));
+        }
+
+        // ── Tool: telegram_send_sticker ───────────────────────────────────
+        if (enabledTools.includes('sendSticker')) {
+            tools.push(new DynamicStructuredTool({
+                name: 'telegram_send_sticker',
+                description: toolDescriptionOverride ||
+                    'Send a sticker to a Telegram chat. Accepts a file_id or a public HTTP URL to a .webp sticker. Returns the sent message object.',
+                schema: z ? z.object({
+                    chat_id: z.string().describe('The chat ID or @username to send the sticker to'),
+                    sticker: z.string().describe('Sticker to send: a file_id or a public HTTP URL to a .webp sticker file'),
+                }) : null,
+                func: async ({ chat_id, sticker } = {}) => {
+                    const runIndex = startToolRun({ tool: 'telegram_send_sticker', chat_id });
+                    log('debug', '[Telegram] telegram_send_sticker called', { chat_id });
+                    try {
+                        if (!chat_id) return JSON.stringify({ error: 'chat_id is required' });
+                        if (!sticker) return JSON.stringify({ error: 'sticker is required' });
+                        const body = { chat_id, sticker };
+                        const result = await telegramApiPost(self, 'sendSticker', body);
+                        const resultStr = JSON.stringify({ success: true, result });
+                        endToolRun(runIndex, { success: true });
+                        return resultStr;
+                    } catch (err) {
+                        const errObj = { error: err.message || String(err) };
+                        log('error', '[Telegram] telegram_send_sticker failed', errObj);
+                        endToolRun(runIndex, errObj);
+                        return JSON.stringify(errObj);
+                    }
+                },
+            }));
+        }
+
+        // ── Tool: telegram_send_media_group ───────────────────────────────
+        if (enabledTools.includes('sendMediaGroup')) {
+            tools.push(new DynamicStructuredTool({
+                name: 'telegram_send_media_group',
+                description: toolDescriptionOverride ||
+                    'Send a group of photos or documents as an album to a Telegram chat. ' +
+                    'The media parameter must be a JSON array of media objects. Each object should have: ' +
+                    '"type" ("photo" or "document"), and one of "url", "file_id", or "base64" for the media content. ' +
+                    'Optional "caption" per item. When using base64, also include "filename". ' +
+                    'Compatible with base64 output from other tools. Returns the sent messages array.',
+                schema: z ? z.object({
+                    chat_id: z.string().describe('The chat ID or @username to send the media group to'),
+                    media: z.string().describe('JSON array of media objects, e.g. [{"type":"photo","url":"https://...","caption":"My photo"},{"type":"document","base64":"...","filename":"doc.pdf"}]'),
+                }) : null,
+                func: async ({ chat_id, media } = {}) => {
+                    const runIndex = startToolRun({ tool: 'telegram_send_media_group', chat_id });
+                    log('debug', '[Telegram] telegram_send_media_group called', { chat_id });
+                    try {
+                        if (!chat_id) return JSON.stringify({ error: 'chat_id is required' });
+                        if (!media) return JSON.stringify({ error: 'media is required' });
+                        let parsedMedia;
+                        try { parsedMedia = JSON.parse(media); } catch (_) {
+                            return JSON.stringify({ error: 'media must be a valid JSON array' });
+                        }
+                        const formData = { chat_id };
+                        const mediaArr = [];
+                        for (let i = 0; i < parsedMedia.length; i++) {
+                            const item = parsedMedia[i];
+                            const mediaObj = { type: item.type || 'photo' };
+                            if (item.caption) mediaObj.caption = item.caption;
+                            if (item.base64) {
+                                const attachName = `file_${i}`;
+                                const buf = base64ToBuffer(item.base64);
+                                const fname = item.filename || (item.type === 'document' ? `file_${i}.pdf` : `photo_${i}.jpg`);
+                                const ct = item.type === 'document' ? guessMimeType(fname) : 'image/jpeg';
+                                formData[attachName] = { value: buf, options: { filename: fname, contentType: ct } };
+                                mediaObj.media = `attach://${attachName}`;
+                            } else if (item.url) {
+                                mediaObj.media = item.url;
+                            } else if (item.file_id) {
+                                mediaObj.media = item.file_id;
+                            }
+                            mediaArr.push(mediaObj);
+                        }
+                        formData.media = JSON.stringify(mediaArr);
+                        const result = await telegramApiMultipart(self, 'sendMediaGroup', formData);
+                        const resultStr = JSON.stringify({ success: true, result });
+                        endToolRun(runIndex, { success: true, count: parsedMedia.length });
+                        return resultStr;
+                    } catch (err) {
+                        const errObj = { error: err.message || String(err) };
+                        log('error', '[Telegram] telegram_send_media_group failed', errObj);
+                        endToolRun(runIndex, errObj);
+                        return JSON.stringify(errObj);
+                    }
+                },
+            }));
+        }
+
+        // ── Tool: telegram_answer_inline_query ────────────────────────────
+        if (enabledTools.includes('answerInlineQuery')) {
+            tools.push(new DynamicStructuredTool({
+                name: 'telegram_answer_inline_query',
+                description: toolDescriptionOverride ||
+                    'Answer an inline query from a Telegram user. The results parameter must be a JSON array of InlineQueryResult objects. ' +
+                    'Returns success status.',
+                schema: z ? z.object({
+                    inline_query_id: z.string().describe('The unique identifier for the inline query to answer'),
+                    results: z.string().describe('JSON array of InlineQueryResult objects (see Telegram Bot API docs)'),
+                }) : null,
+                func: async ({ inline_query_id, results } = {}) => {
+                    const runIndex = startToolRun({ tool: 'telegram_answer_inline_query' });
+                    log('debug', '[Telegram] telegram_answer_inline_query called');
+                    try {
+                        if (!inline_query_id) return JSON.stringify({ error: 'inline_query_id is required' });
+                        if (!results) return JSON.stringify({ error: 'results is required' });
+                        let parsedResults;
+                        try { parsedResults = JSON.parse(results); } catch (_) {
+                            return JSON.stringify({ error: 'results must be a valid JSON array' });
+                        }
+                        const body = { inline_query_id, results: parsedResults };
+                        const result = await telegramApiPost(self, 'answerInlineQuery', body);
+                        const resultStr = JSON.stringify({ success: true, result });
+                        endToolRun(runIndex, { success: true });
+                        return resultStr;
+                    } catch (err) {
+                        const errObj = { error: err.message || String(err) };
+                        log('error', '[Telegram] telegram_answer_inline_query failed', errObj);
+                        endToolRun(runIndex, errObj);
+                        return JSON.stringify(errObj);
+                    }
+                },
+            }));
+        }
+
+        // ── Tool: telegram_pin_message ────────────────────────────────────
+        if (enabledTools.includes('pinMessage')) {
+            tools.push(new DynamicStructuredTool({
+                name: 'telegram_pin_message',
+                description: toolDescriptionOverride ||
+                    'Pin a message in a Telegram chat. The bot must have appropriate admin rights. Returns success status.',
+                schema: z ? z.object({
+                    chat_id: z.string().describe('The chat ID or @username of the chat'),
+                    message_id: z.number().describe('ID of the message to pin'),
+                }) : null,
+                func: async ({ chat_id, message_id } = {}) => {
+                    const runIndex = startToolRun({ tool: 'telegram_pin_message', chat_id, message_id });
+                    log('debug', '[Telegram] telegram_pin_message called', { chat_id, message_id });
+                    try {
+                        if (!chat_id) return JSON.stringify({ error: 'chat_id is required' });
+                        if (!message_id) return JSON.stringify({ error: 'message_id is required' });
+                        const body = { chat_id, message_id };
+                        const result = await telegramApiPost(self, 'pinChatMessage', body);
+                        const resultStr = JSON.stringify({ success: true, result });
+                        endToolRun(runIndex, { success: true });
+                        return resultStr;
+                    } catch (err) {
+                        const errObj = { error: err.message || String(err) };
+                        log('error', '[Telegram] telegram_pin_message failed', errObj);
+                        endToolRun(runIndex, errObj);
+                        return JSON.stringify(errObj);
+                    }
+                },
+            }));
+        }
+
+        // ── Tool: telegram_unpin_message ──────────────────────────────────
+        if (enabledTools.includes('unpinMessage')) {
+            tools.push(new DynamicStructuredTool({
+                name: 'telegram_unpin_message',
+                description: toolDescriptionOverride ||
+                    'Unpin a message in a Telegram chat. If message_id is omitted, all pinned messages are unpinned. Returns success status.',
+                schema: z ? z.object({
+                    chat_id: z.string().describe('The chat ID or @username of the chat'),
+                    message_id: numOpt('ID of the message to unpin. If omitted, all pinned messages are unpinned'),
+                }) : null,
+                func: async ({ chat_id, message_id } = {}) => {
+                    const runIndex = startToolRun({ tool: 'telegram_unpin_message', chat_id });
+                    log('debug', '[Telegram] telegram_unpin_message called', { chat_id, message_id });
+                    try {
+                        if (!chat_id) return JSON.stringify({ error: 'chat_id is required' });
+                        if (message_id) {
+                            const body = { chat_id, message_id };
+                            const result = await telegramApiPost(self, 'unpinChatMessage', body);
+                            const resultStr = JSON.stringify({ success: true, result });
+                            endToolRun(runIndex, { success: true });
+                            return resultStr;
+                        } else {
+                            const result = await telegramApiPost(self, 'unpinAllChatMessages', { chat_id });
+                            const resultStr = JSON.stringify({ success: true, result });
+                            endToolRun(runIndex, { success: true });
+                            return resultStr;
+                        }
+                    } catch (err) {
+                        const errObj = { error: err.message || String(err) };
+                        log('error', '[Telegram] telegram_unpin_message failed', errObj);
+                        endToolRun(runIndex, errObj);
+                        return JSON.stringify(errObj);
+                    }
+                },
+            }));
+        }
+
+        // ── Tool: telegram_send_invoice ───────────────────────────────────
+        if (enabledTools.includes('sendInvoice')) {
+            tools.push(new DynamicStructuredTool({
+                name: 'telegram_send_invoice',
+                description: toolDescriptionOverride ||
+                    'Send an invoice for payments via Telegram. Requires a payment provider token. ' +
+                    'The prices parameter must be a JSON array of {label, amount} objects where amount is in the smallest currency unit. ' +
+                    'Returns the sent message object.',
+                schema: z ? z.object({
+                    chat_id: z.string().describe('The chat ID to send the invoice to'),
+                    title: z.string().describe('Product name (1-32 characters)'),
+                    description: z.string().describe('Product description (1-255 characters)'),
+                    payload: z.string().describe('Bot-defined invoice payload (1-128 bytes, not shown to user)'),
+                    provider_token: z.string().describe('Payment provider token (from @BotFather)'),
+                    currency: z.string().describe('Three-letter ISO 4217 currency code (e.g., "USD", "EUR")'),
+                    prices: z.string().describe('JSON array of price portions, e.g. [{"label":"Product","amount":1000}] (amount in smallest currency unit, e.g. cents)'),
+                }) : null,
+                func: async ({ chat_id, title, description, payload, provider_token, currency, prices } = {}) => {
+                    const runIndex = startToolRun({ tool: 'telegram_send_invoice', chat_id });
+                    log('debug', '[Telegram] telegram_send_invoice called', { chat_id });
+                    try {
+                        if (!chat_id) return JSON.stringify({ error: 'chat_id is required' });
+                        if (!title) return JSON.stringify({ error: 'title is required' });
+                        if (!description) return JSON.stringify({ error: 'description is required' });
+                        if (!payload) return JSON.stringify({ error: 'payload is required' });
+                        if (!provider_token) return JSON.stringify({ error: 'provider_token is required' });
+                        if (!currency) return JSON.stringify({ error: 'currency is required' });
+                        if (!prices) return JSON.stringify({ error: 'prices is required' });
+                        let parsedPrices;
+                        try { parsedPrices = JSON.parse(prices); } catch (_) {
+                            return JSON.stringify({ error: 'prices must be a valid JSON array' });
+                        }
+                        const body = { chat_id, title, description, payload, provider_token, currency, prices: parsedPrices };
+                        const result = await telegramApiPost(self, 'sendInvoice', body);
+                        const resultStr = JSON.stringify({ success: true, result });
+                        endToolRun(runIndex, { success: true });
+                        return resultStr;
+                    } catch (err) {
+                        const errObj = { error: err.message || String(err) };
+                        log('error', '[Telegram] telegram_send_invoice failed', errObj);
+                        endToolRun(runIndex, errObj);
+                        return JSON.stringify(errObj);
+                    }
+                },
+            }));
+        }
+
+        // ── Tool: telegram_get_me ─────────────────────────────────────────
+        if (enabledTools.includes('getMe')) {
+            tools.push(new DynamicStructuredTool({
+                name: 'telegram_get_me',
+                description: toolDescriptionOverride ||
+                    'Get basic information about the Telegram bot (id, name, username, capabilities). No parameters required. Returns the bot User object.',
+                schema: z ? z.object({}) : null,
+                func: async () => {
+                    const runIndex = startToolRun({ tool: 'telegram_get_me' });
+                    log('debug', '[Telegram] telegram_get_me called');
+                    try {
+                        const result = await telegramApiPost(self, 'getMe', {});
+                        const resultStr = JSON.stringify({ success: true, result });
+                        endToolRun(runIndex, { success: true });
+                        return resultStr;
+                    } catch (err) {
+                        const errObj = { error: err.message || String(err) };
+                        log('error', '[Telegram] telegram_get_me failed', errObj);
+                        endToolRun(runIndex, errObj);
+                        return JSON.stringify(errObj);
+                    }
+                },
+            }));
+        }
+
+        // ── Tool: telegram_set_webhook ────────────────────────────────────
+        if (enabledTools.includes('setWebhook')) {
+            tools.push(new DynamicStructuredTool({
+                name: 'telegram_set_webhook',
+                description: toolDescriptionOverride ||
+                    'Set the webhook URL for the Telegram bot. Telegram will send updates to this URL. Returns success status.',
+                schema: z ? z.object({
+                    url: z.string().describe('HTTPS URL to send updates to (use empty string to remove webhook)'),
+                }) : null,
+                func: async ({ url } = {}) => {
+                    const runIndex = startToolRun({ tool: 'telegram_set_webhook' });
+                    log('debug', '[Telegram] telegram_set_webhook called', { url });
+                    try {
+                        if (url === undefined) return JSON.stringify({ error: 'url is required' });
+                        const body = { url };
+                        const result = await telegramApiPost(self, 'setWebhook', body);
+                        const resultStr = JSON.stringify({ success: true, result });
+                        endToolRun(runIndex, { success: true });
+                        return resultStr;
+                    } catch (err) {
+                        const errObj = { error: err.message || String(err) };
+                        log('error', '[Telegram] telegram_set_webhook failed', errObj);
+                        endToolRun(runIndex, errObj);
+                        return JSON.stringify(errObj);
+                    }
+                },
+            }));
+        }
+
+        // ── Tool: telegram_delete_webhook ─────────────────────────────────
+        if (enabledTools.includes('deleteWebhook')) {
+            tools.push(new DynamicStructuredTool({
+                name: 'telegram_delete_webhook',
+                description: toolDescriptionOverride ||
+                    'Delete the webhook for the Telegram bot, switching back to getUpdates mode. Returns success status.',
+                schema: z ? z.object({}) : null,
+                func: async () => {
+                    const runIndex = startToolRun({ tool: 'telegram_delete_webhook' });
+                    log('debug', '[Telegram] telegram_delete_webhook called');
+                    try {
+                        const result = await telegramApiPost(self, 'deleteWebhook', {});
+                        const resultStr = JSON.stringify({ success: true, result });
+                        endToolRun(runIndex, { success: true });
+                        return resultStr;
+                    } catch (err) {
+                        const errObj = { error: err.message || String(err) };
+                        log('error', '[Telegram] telegram_delete_webhook failed', errObj);
+                        endToolRun(runIndex, errObj);
+                        return JSON.stringify(errObj);
+                    }
+                },
+            }));
+        }
+
+        return { response: tools };
+    }
+
+    async execute() {
+        const items = this.getInputData();
+        const returnData = [];
+        for (let i = 0; i < items.length; i++) {
+            returnData.push({
+                json: {
+                    message: 'Telegram Bot AI Tools node is designed to be connected to an AI Agent node. Connect the "Tool" output to an AI Agent node\'s "Tools" input.',
+                    enabledTools: this.getNodeParameter('enabledTools', i, []),
+                    documentation: 'https://core.telegram.org/bots/api',
+                },
+            });
+        }
+        return [returnData];
+    }
+}
+exports.TelegramBotAiTools = TelegramBotAiTools;

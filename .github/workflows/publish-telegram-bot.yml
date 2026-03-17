@@ -1,0 +1,65 @@
+name: Publish Telegram Bot to npm
+
+on:
+  workflow_dispatch:
+    inputs:
+      version_bump:
+        description: 'Version bump type'
+        required: true
+        default: 'patch'
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    defaults:
+      run:
+        working-directory: telegram-bot-package
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Sync dist files from package/dist
+        working-directory: .
+        run: |
+          mkdir -p telegram-bot-package/dist/nodes/telegram
+          mkdir -p telegram-bot-package/dist/credentials
+          cp package/dist/nodes/telegram/TelegramBot.node.js       telegram-bot-package/dist/nodes/telegram/TelegramBot.node.js
+          cp package/dist/nodes/telegram/TelegramBotAiTools.node.js telegram-bot-package/dist/nodes/telegram/TelegramBotAiTools.node.js
+          cp package/dist/nodes/telegram/telegram.svg               telegram-bot-package/dist/nodes/telegram/telegram.svg
+          cp package/dist/credentials/TelegramBotApi.credentials.js telegram-bot-package/dist/credentials/TelegramBotApi.credentials.js
+
+      - name: Validate node syntax
+        working-directory: .
+        run: |
+          node --check telegram-bot-package/dist/credentials/TelegramBotApi.credentials.js
+          node --check telegram-bot-package/dist/nodes/telegram/TelegramBot.node.js
+          node --check telegram-bot-package/dist/nodes/telegram/TelegramBotAiTools.node.js
+          echo "✅ All files pass syntax check"
+
+      - name: Bump version
+        working-directory: .
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          npm version ${{ github.event.inputs.version_bump }} --no-git-tag-version --prefix telegram-bot-package
+          git add telegram-bot-package/package.json
+          git commit -m "chore: bump telegram-bot version [${{ github.event.inputs.version_bump }}] [skip ci]"
+          git push --force-with-lease
+
+      - name: Publish to npm
+        run: npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NODE_AUTH_TOKEN }}
