@@ -1,0 +1,51 @@
+{
+  "name": "@unwarkz/n8n-nodes-mem0",
+  "version": "1.3.14",
+  "description": "N8N community node for Mem0 - intelligent memory layer for AI applications",
+  "license": "MIT",
+  "homepage": "https://github.com/unwarkz/n8n-nodes-mem0-api-server#readme",
+  "author": {
+    "name": "unwarkz"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/unwarkz/n8n-nodes-mem0-api-server.git"
+  },
+  "bugs": {
+    "url": "https://github.com/unwarkz/n8n-nodes-mem0-api-server/issues"
+  },
+  "main": "index.js",
+  "scripts": {
+    "prepublishOnly": "echo 'Skipping build - dist files are pre-built'"
+  },
+  "files": [
+    "dist",
+    "index.js"
+  ],
+  "n8n": {
+    "n8nNodesApiVersion": 1,
+    "credentials": [
+      "dist/credentials/Mem0Api.credentials.js",
+      "dist/credentials/Mem0SelfHostedApi.credentials.js"
+    ],
+    "nodes": [
+      "dist/nodes/Mem0/Mem0.node.js",
+      "dist/nodes/Mem0/Mem0Memory.node.js",
+      "dist/nodes/Mem0/Mem0AiTools.node.js"
+    ]
+  },
+  "keywords": [
+    "n8n-community-node-package",
+    "n8n",
+    "mem0",
+    "memory",
+    "ai",
+    "llm",
+    "long-term-memory",
+    "semantic-search",
+    "vector-database"
+  ],
+  "peerDependencies": {
+    "n8n-workflow": ">=1.0.0"
+  }
+}
