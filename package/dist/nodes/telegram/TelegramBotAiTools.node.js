@@ -89,15 +89,31 @@ async function downloadTelegramFile(ctx, filePath) {
     return ctx.helpers.request(options);
 }
 
-function bufferToBase64Result(buf, filename, mimeType) {
-    const b64 = Buffer.isBuffer(buf) ? buf.toString('base64') : Buffer.from(buf).toString('base64');
-    const sizeKb = Math.round((b64.length * 3 / 4) / 1024);
+/**
+ * Store a binary buffer in n8n's binary data system (filesystem or database mode)
+ * and attach it to the current execution item. Returns a short JSON summary
+ * with the binary property name so the AI agent can reference it downstream.
+ *
+ * Compatible with N8N_DEFAULT_BINARY_DATA_MODE=filesystem and database.
+ * Works correctly with n8n v2 task runners (no in-memory mutation).
+ */
+let _binaryCounter = 0;
+async function storeBinaryOutput(ctx, buf, filename, mimeType) {
+    const buffer = Buffer.isBuffer(buf) ? buf : Buffer.from(buf);
+    const sizeKb = Math.round(buffer.length / 1024);
+    const binaryPropertyName = `telegram_file_${_binaryCounter++}`;
+    const binaryData = await ctx.helpers.prepareBinaryData(buffer, filename, mimeType);
+    const inputItems = ctx.getInputData();
+    const item = inputItems[0] || { json: {}, binary: {} };
+    if (!item.binary) item.binary = {};
+    item.binary[binaryPropertyName] = binaryData;
     return JSON.stringify({
         success: true,
+        binaryPropertyName,
         filename,
         mimeType,
         sizeKb,
-        base64: b64,
+        message: `File "${filename}" (${sizeKb} KB) stored in binary property "${binaryPropertyName}". Pass this binaryPropertyName to other tools that need this file.`,
     });
 }
 
@@ -119,18 +135,6 @@ function guessMimeType(filePath) {
     return map[ext] || 'application/octet-stream';
 }
 
-function isBase64(str) {
-    if (!str || typeof str !== 'string') return false;
-    if (str.startsWith('http://') || str.startsWith('https://')) return false;
-    if (str.length < 50) return false;
-    const raw = str.includes(',') ? str.split(',')[1] : str;
-    return /^[A-Za-z0-9+/\n\r]+=*$/.test(raw.slice(0, 200));
-}
-
-function base64ToBuffer(b64) {
-    const raw = b64.includes(',') ? b64.split(',')[1] : b64;
-    return Buffer.from(raw, 'base64');
-}
 
 // ── Node Class ──────────────────────────────────────────────────────────────
 
@@ -165,7 +169,7 @@ class TelegramBotAiTools {
                     options: [
                         { name: 'Send Message', value: 'sendMessage', description: 'Send a text message to a chat' },
                         { name: 'Send Photo', value: 'sendPhoto', description: 'Send a photo to a chat' },
-                        { name: 'Send Document', value: 'sendDocument', description: 'Send a document/file to a chat (supports base64 input from other tools)' },
+                        { name: 'Send Document', value: 'sendDocument', description: 'Send a document/file to a chat (accepts binary property reference from other tools)' },
                         { name: 'Send Video', value: 'sendVideo', description: 'Send a video to a chat' },
                         { name: 'Send Audio', value: 'sendAudio', description: 'Send an audio file to a chat' },
                         { name: 'Send Voice', value: 'sendVoice', description: 'Send a voice message to a chat' },
@@ -175,7 +179,7 @@ class TelegramBotAiTools {
                         { name: 'Forward Message', value: 'forwardMessage', description: 'Forward a message from one chat to another' },
                         { name: 'Edit Message', value: 'editMessage', description: 'Edit an existing text message' },
                         { name: 'Delete Message', value: 'deleteMessage', description: 'Delete a message from a chat' },
-                        { name: 'Get File', value: 'getFile', description: 'Download a file from Telegram by file_id (returns base64)' },
+                        { name: 'Get File', value: 'getFile', description: 'Download a file from Telegram by file_id (stores in binary property)' },
                         { name: 'Send Chat Action', value: 'sendChatAction', description: 'Show typing or upload status in a chat' },
                         { name: 'Get Chat', value: 'getChat', description: 'Get information about a chat' },
                         { name: 'Send Sticker', value: 'sendSticker', description: 'Send a sticker to a chat' },
@@ -225,12 +229,9 @@ class TelegramBotAiTools {
 
         function endToolRun(runIndex, data) {
             try {
-                const logData = data && typeof data === 'object' && data.base64
-                    ? { ...data, base64: `[base64, ${data.sizeKb}kb]` }
-                    : data;
-                const json = (logData !== null && typeof logData === 'object' && !Array.isArray(logData))
-                    ? logData
-                    : { result: logData };
+                const json = (data !== null && typeof data === 'object' && !Array.isArray(data))
+                    ? data
+                    : { result: data };
                 self.addOutputData('ai_tool', runIndex, [[{ json }]]);
             } catch (_) { /* addOutputData may not be available in all n8n versions */ }
         }
@@ -238,6 +239,25 @@ class TelegramBotAiTools {
         function strOpt(desc) { return z ? z.string().optional().describe(desc) : undefined; }
         function boolOpt(desc) { return z ? z.boolean().optional().describe(desc) : undefined; }
         function numOpt(desc) { return z ? z.number().optional().describe(desc) : undefined; }
+
+        /**
+         * Retrieve a binary buffer from n8n's binary data system by property name.
+         */
+        async function getBinaryInputBuffer(binaryPropertyName) {
+            return self.helpers.getBinaryDataBuffer(0, binaryPropertyName);
+        }
+
+        /**
+         * Get the binary metadata (fileName, mimeType) for a binary property.
+         */
+        function getBinaryMeta(binaryPropertyName) {
+            const items = self.getInputData();
+            const item = items && items[0];
+            if (item && item.binary && item.binary[binaryPropertyName]) {
+                return item.binary[binaryPropertyName];
+            }
+            return null;
+        }
 
         const tools = [];
 
@@ -289,30 +309,30 @@ class TelegramBotAiTools {
             tools.push(new DynamicStructuredTool({
                 name: 'telegram_send_photo',
                 description: toolDescriptionOverride ||
-                    'Send a photo to a Telegram chat. Accepts a file_id, a public HTTP URL, or a base64-encoded image string. ' +
-                    'When base64 is provided, the image is uploaded as multipart form data. ' +
-                    'Compatible with base64 output from gotenberg_url_screenshot or other tools that return base64 images. ' +
+                    'Send a photo to a Telegram chat. Accepts a file_id, a public HTTP URL, or a binary_property_name referencing a file stored by a previous tool (e.g., gotenberg_url_screenshot). ' +
+                    'When binary_property_name is provided, the image is uploaded from the binary data system. ' +
                     'Returns the sent message object.',
                 schema: z ? z.object({
                     chat_id: z.string().describe('The chat ID or @username to send the photo to'),
-                    photo: z.string().describe('Photo to send: a file_id, a public HTTP URL, or a base64-encoded image string'),
+                    photo: z.string().describe('Photo to send: a Telegram file_id, a public HTTP URL, or a binary_property_name from a previous tool that stored an image'),
                     caption: strOpt('Photo caption (0-1024 characters)'),
                     parse_mode: strOpt('Caption formatting: "HTML" | "MarkdownV2" | "Markdown"'),
-                    filename: strOpt('Filename when uploading base64 (default: "photo.jpg")'),
                 }) : null,
-                func: async ({ chat_id, photo, caption, parse_mode, filename } = {}) => {
+                func: async ({ chat_id, photo, caption, parse_mode } = {}) => {
                     const runIndex = startToolRun({ tool: 'telegram_send_photo', chat_id });
                     log('debug', '[Telegram] telegram_send_photo called', { chat_id });
                     try {
                         if (!chat_id) return JSON.stringify({ error: 'chat_id is required' });
                         if (!photo) return JSON.stringify({ error: 'photo is required' });
                         let result;
-                        if (isBase64(photo)) {
-                            const buf = base64ToBuffer(photo);
-                            const fname = filename || 'photo.jpg';
+                        // Check if it's a binary property name
+                        const meta = getBinaryMeta(photo);
+                        if (meta) {
+                            const buf = await getBinaryInputBuffer(photo);
+                            const fname = meta.fileName || 'photo.jpg';
                             const formData = {
                                 chat_id,
-                                photo: { value: buf, options: { filename: fname, contentType: 'image/jpeg' } },
+                                photo: { value: buf, options: { filename: fname, contentType: meta.mimeType || 'image/jpeg' } },
                             };
                             if (caption) formData.caption = caption;
                             if (parse_mode) formData.parse_mode = parse_mode;
@@ -341,28 +361,27 @@ class TelegramBotAiTools {
             tools.push(new DynamicStructuredTool({
                 name: 'telegram_send_document',
                 description: toolDescriptionOverride ||
-                    'Send a document/file to a Telegram chat. Accepts base64-encoded file content. ' +
+                    'Send a document/file to a Telegram chat. Accepts a binary_property_name referencing a file stored by a previous tool. ' +
                     'Compatible with output from gotenberg_url_to_pdf, gotenberg_html_to_pdf, gotenberg_libreoffice_convert, ' +
-                    'gotenberg_merge_pdfs, and any other tool that returns base64 data. ' +
-                    'Pass the base64 string from those tools directly as document_base64. ' +
+                    'gotenberg_merge_pdfs, telegram_get_file, and any other tool that stores files in binary properties. ' +
+                    'Pass the binaryPropertyName from those tools directly as binary_property_name. ' +
                     'Returns the sent message object.',
                 schema: z ? z.object({
                     chat_id: z.string().describe('The chat ID or @username to send the document to'),
-                    document_base64: z.string().describe('Base64-encoded file content to send as a document'),
-                    filename: z.string().describe('Filename with extension (e.g., "report.pdf", "data.xlsx")'),
+                    binary_property_name: z.string().describe('Name of the binary property containing the file to send (binaryPropertyName from a previous tool)'),
                     caption: strOpt('Document caption (0-1024 characters)'),
                     parse_mode: strOpt('Caption formatting: "HTML" | "MarkdownV2" | "Markdown"'),
-                    mime_type: strOpt('MIME type of the file (auto-detected from filename if omitted)'),
                 }) : null,
-                func: async ({ chat_id, document_base64, filename, caption, parse_mode, mime_type } = {}) => {
-                    const runIndex = startToolRun({ tool: 'telegram_send_document', chat_id, filename });
-                    log('debug', '[Telegram] telegram_send_document called', { chat_id, filename });
+                func: async ({ chat_id, binary_property_name, caption, parse_mode } = {}) => {
+                    const runIndex = startToolRun({ tool: 'telegram_send_document', chat_id, binary_property_name });
+                    log('debug', '[Telegram] telegram_send_document called', { chat_id, binary_property_name });
                     try {
                         if (!chat_id) return JSON.stringify({ error: 'chat_id is required' });
-                        if (!document_base64) return JSON.stringify({ error: 'document_base64 is required' });
-                        if (!filename) return JSON.stringify({ error: 'filename is required' });
-                        const buf = base64ToBuffer(document_base64);
-                        const contentType = mime_type || guessMimeType(filename);
+                        if (!binary_property_name) return JSON.stringify({ error: 'binary_property_name is required' });
+                        const buf = await getBinaryInputBuffer(binary_property_name);
+                        const meta = getBinaryMeta(binary_property_name);
+                        const filename = (meta && meta.fileName) || 'file';
+                        const contentType = (meta && meta.mimeType) || 'application/octet-stream';
                         const formData = {
                             chat_id,
                             document: { value: buf, options: { filename, contentType } },
@@ -388,27 +407,27 @@ class TelegramBotAiTools {
             tools.push(new DynamicStructuredTool({
                 name: 'telegram_send_video',
                 description: toolDescriptionOverride ||
-                    'Send a video to a Telegram chat. Accepts a file_id, a public HTTP URL, or a base64-encoded video string. ' +
+                    'Send a video to a Telegram chat. Accepts a file_id, a public HTTP URL, or a binary_property_name referencing a video stored by a previous tool. ' +
                     'Returns the sent message object.',
                 schema: z ? z.object({
                     chat_id: z.string().describe('The chat ID or @username to send the video to'),
-                    video: z.string().describe('Video to send: a file_id, a public HTTP URL, or a base64-encoded video string'),
+                    video: z.string().describe('Video to send: a Telegram file_id, a public HTTP URL, or a binary_property_name from a previous tool that stored a video'),
                     caption: strOpt('Video caption (0-1024 characters)'),
-                    filename: strOpt('Filename when uploading base64 (default: "video.mp4")'),
                 }) : null,
-                func: async ({ chat_id, video, caption, filename } = {}) => {
+                func: async ({ chat_id, video, caption } = {}) => {
                     const runIndex = startToolRun({ tool: 'telegram_send_video', chat_id });
                     log('debug', '[Telegram] telegram_send_video called', { chat_id });
                     try {
                         if (!chat_id) return JSON.stringify({ error: 'chat_id is required' });
                         if (!video) return JSON.stringify({ error: 'video is required' });
                         let result;
-                        if (isBase64(video)) {
-                            const buf = base64ToBuffer(video);
-                            const fname = filename || 'video.mp4';
+                        const meta = getBinaryMeta(video);
+                        if (meta) {
+                            const buf = await getBinaryInputBuffer(video);
+                            const fname = meta.fileName || 'video.mp4';
                             const formData = {
                                 chat_id,
-                                video: { value: buf, options: { filename: fname, contentType: 'video/mp4' } },
+                                video: { value: buf, options: { filename: fname, contentType: meta.mimeType || 'video/mp4' } },
                             };
                             if (caption) formData.caption = caption;
                             result = await telegramApiMultipart(self, 'sendVideo', formData);
@@ -435,27 +454,27 @@ class TelegramBotAiTools {
             tools.push(new DynamicStructuredTool({
                 name: 'telegram_send_audio',
                 description: toolDescriptionOverride ||
-                    'Send an audio file to a Telegram chat. Accepts a file_id, a public HTTP URL, or a base64-encoded audio string. ' +
+                    'Send an audio file to a Telegram chat. Accepts a file_id, a public HTTP URL, or a binary_property_name referencing an audio file stored by a previous tool. ' +
                     'Returns the sent message object.',
                 schema: z ? z.object({
                     chat_id: z.string().describe('The chat ID or @username to send the audio to'),
-                    audio: z.string().describe('Audio to send: a file_id, a public HTTP URL, or a base64-encoded audio string'),
+                    audio: z.string().describe('Audio to send: a Telegram file_id, a public HTTP URL, or a binary_property_name from a previous tool that stored an audio file'),
                     caption: strOpt('Audio caption (0-1024 characters)'),
-                    filename: strOpt('Filename when uploading base64 (default: "audio.mp3")'),
                 }) : null,
-                func: async ({ chat_id, audio, caption, filename } = {}) => {
+                func: async ({ chat_id, audio, caption } = {}) => {
                     const runIndex = startToolRun({ tool: 'telegram_send_audio', chat_id });
                     log('debug', '[Telegram] telegram_send_audio called', { chat_id });
                     try {
                         if (!chat_id) return JSON.stringify({ error: 'chat_id is required' });
                         if (!audio) return JSON.stringify({ error: 'audio is required' });
                         let result;
-                        if (isBase64(audio)) {
-                            const buf = base64ToBuffer(audio);
-                            const fname = filename || 'audio.mp3';
+                        const meta = getBinaryMeta(audio);
+                        if (meta) {
+                            const buf = await getBinaryInputBuffer(audio);
+                            const fname = meta.fileName || 'audio.mp3';
                             const formData = {
                                 chat_id,
-                                audio: { value: buf, options: { filename: fname, contentType: 'audio/mpeg' } },
+                                audio: { value: buf, options: { filename: fname, contentType: meta.mimeType || 'audio/mpeg' } },
                             };
                             if (caption) formData.caption = caption;
                             result = await telegramApiMultipart(self, 'sendAudio', formData);
@@ -482,11 +501,11 @@ class TelegramBotAiTools {
             tools.push(new DynamicStructuredTool({
                 name: 'telegram_send_voice',
                 description: toolDescriptionOverride ||
-                    'Send a voice message to a Telegram chat. Accepts a file_id, a public HTTP URL, or a base64-encoded OGG audio. ' +
+                    'Send a voice message to a Telegram chat. Accepts a file_id, a public HTTP URL, or a binary_property_name referencing an OGG audio file stored by a previous tool. ' +
                     'Returns the sent message object.',
                 schema: z ? z.object({
                     chat_id: z.string().describe('The chat ID or @username to send the voice message to'),
-                    voice: z.string().describe('Voice to send: a file_id, a public HTTP URL, or a base64-encoded OGG audio string'),
+                    voice: z.string().describe('Voice to send: a Telegram file_id, a public HTTP URL, or a binary_property_name from a previous tool that stored an OGG audio file'),
                     caption: strOpt('Voice message caption (0-1024 characters)'),
                 }) : null,
                 func: async ({ chat_id, voice, caption } = {}) => {
@@ -496,11 +515,12 @@ class TelegramBotAiTools {
                         if (!chat_id) return JSON.stringify({ error: 'chat_id is required' });
                         if (!voice) return JSON.stringify({ error: 'voice is required' });
                         let result;
-                        if (isBase64(voice)) {
-                            const buf = base64ToBuffer(voice);
+                        const meta = getBinaryMeta(voice);
+                        if (meta) {
+                            const buf = await getBinaryInputBuffer(voice);
                             const formData = {
                                 chat_id,
-                                voice: { value: buf, options: { filename: 'voice.ogg', contentType: 'audio/ogg' } },
+                                voice: { value: buf, options: { filename: meta.fileName || 'voice.ogg', contentType: meta.mimeType || 'audio/ogg' } },
                             };
                             if (caption) formData.caption = caption;
                             result = await telegramApiMultipart(self, 'sendVoice', formData);
@@ -735,9 +755,9 @@ class TelegramBotAiTools {
             tools.push(new DynamicStructuredTool({
                 name: 'telegram_get_file',
                 description: toolDescriptionOverride ||
-                    'Download a file from Telegram servers by file_id. Returns JSON with {success, filename, mimeType, sizeKb, base64}. ' +
-                    'The base64 string can be passed directly to gotenberg_libreoffice_convert, gotenberg_merge_pdfs, ' +
-                    'telegram_send_document, or any other tool that accepts base64 input for document conversion or forwarding.',
+                    'Download a file from Telegram servers by file_id. Stores the file in a binary property and returns its name. ' +
+                    'The returned binaryPropertyName can be passed directly to gotenberg_libreoffice_convert, gotenberg_merge_pdfs, ' +
+                    'telegram_send_document, or any other tool that accepts a binary_property_name for document conversion or forwarding.',
                 schema: z ? z.object({
                     file_id: z.string().describe('The file_id obtained from a Telegram message (e.g., from a document, photo, audio, video message)'),
                 }) : null,
@@ -752,10 +772,10 @@ class TelegramBotAiTools {
                         const fileBuffer = await downloadTelegramFile(self, filePath);
                         const filename = filePath.split('/').pop() || 'file';
                         const mimeType = guessMimeType(filename);
-                        const resultStr = bufferToBase64Result(fileBuffer, filename, mimeType);
+                        const resultStr = await storeBinaryOutput(self, fileBuffer, filename, mimeType);
                         const result = JSON.parse(resultStr);
                         log('info', '[Telegram] telegram_get_file succeeded', { file_id, filename, sizeKb: result.sizeKb });
-                        endToolRun(runIndex, { success: true, filename, sizeKb: result.sizeKb });
+                        endToolRun(runIndex, { success: true, filename, binaryPropertyName: result.binaryPropertyName, sizeKb: result.sizeKb });
                         return resultStr;
                     } catch (err) {
                         const errObj = { error: err.message || String(err) };
@@ -865,12 +885,12 @@ class TelegramBotAiTools {
                 description: toolDescriptionOverride ||
                     'Send a group of photos or documents as an album to a Telegram chat. ' +
                     'The media parameter must be a JSON array of media objects. Each object should have: ' +
-                    '"type" ("photo" or "document"), and one of "url", "file_id", or "base64" for the media content. ' +
-                    'Optional "caption" per item. When using base64, also include "filename". ' +
-                    'Compatible with base64 output from other tools. Returns the sent messages array.',
+                    '"type" ("photo" or "document"), and one of "url", "file_id", or "binary_property_name" for the media content. ' +
+                    'When using binary_property_name, the file is read from the n8n binary data system. ' +
+                    'Compatible with binary output from other tools. Returns the sent messages array.',
                 schema: z ? z.object({
                     chat_id: z.string().describe('The chat ID or @username to send the media group to'),
-                    media: z.string().describe('JSON array of media objects, e.g. [{"type":"photo","url":"https://...","caption":"My photo"},{"type":"document","base64":"...","filename":"doc.pdf"}]'),
+                    media: z.string().describe('JSON array of media objects, e.g. [{"type":"photo","url":"https://...","caption":"My photo"},{"type":"document","binary_property_name":"gotenberg_file_0"}]'),
                 }) : null,
                 func: async ({ chat_id, media } = {}) => {
                     const runIndex = startToolRun({ tool: 'telegram_send_media_group', chat_id });
@@ -888,11 +908,12 @@ class TelegramBotAiTools {
                             const item = parsedMedia[i];
                             const mediaObj = { type: item.type || 'photo' };
                             if (item.caption) mediaObj.caption = item.caption;
-                            if (item.base64) {
+                            if (item.binary_property_name) {
                                 const attachName = `file_${i}`;
-                                const buf = base64ToBuffer(item.base64);
-                                const fname = item.filename || (item.type === 'document' ? `file_${i}.pdf` : `photo_${i}.jpg`);
-                                const ct = item.type === 'document' ? guessMimeType(fname) : 'image/jpeg';
+                                const buf = await getBinaryInputBuffer(item.binary_property_name);
+                                const meta = getBinaryMeta(item.binary_property_name);
+                                const fname = (meta && meta.fileName) || (item.type === 'document' ? `file_${i}.pdf` : `photo_${i}.jpg`);
+                                const ct = (meta && meta.mimeType) || (item.type === 'document' ? 'application/octet-stream' : 'image/jpeg');
                                 formData[attachName] = { value: buf, options: { filename: fname, contentType: ct } };
                                 mediaObj.media = `attach://${attachName}`;
                             } else if (item.url) {
