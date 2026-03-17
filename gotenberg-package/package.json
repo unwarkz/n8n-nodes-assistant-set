@@ -1,5 +1,5 @@
 {
-  "name": "n8n-nodes-gotenberg-pdf",
+  "name": "@unwarkz/n8n-nodes-gotenberg-pdf",
   "version": "1.0.1",
   "description": "N8N community node for Gotenberg - Docker-based PDF conversion API (Chromium, LibreOffice, PDF Engines)",
   "license": "MIT",
