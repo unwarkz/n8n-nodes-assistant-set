@@ -57,7 +57,7 @@ jobs:
           npm version ${{ github.event.inputs.version_bump }} --no-git-tag-version --prefix telegram-bot-package
           git add telegram-bot-package/package.json
           git commit -m "chore: bump telegram-bot version [${{ github.event.inputs.version_bump }}] [skip ci]"
-          git push --force-with-lease
+          git push origin HEAD:master
 
       - name: Publish to npm
         run: npm publish --access public
