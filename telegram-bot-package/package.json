@@ -1,6 +1,6 @@
 {
   "name": "@unwarkz/n8n-nodes-telegram-bot",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "N8N community node for Telegram Bot API - full coverage of all Bot API methods with AI Agent tools",
   "license": "MIT",
   "homepage": "https://github.com/unwarkz/n8n-nodes-mem0-api-server#readme",
