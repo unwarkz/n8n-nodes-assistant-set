@@ -59,15 +59,23 @@ let DynamicStructuredTool;
  *
  * Connect the "ai_tool" output to an AI Agent node's "Tools" input.
  *
+ * Binary data protocol:
+ *   Tools that PRODUCE files store them in n8n's binary data system and return
+ *   a JSON object with a "binaryPropertyName" field. Pass this field name to
+ *   any other tool that needs the file.
+ *   Tools that CONSUME files accept a "binary_property_name" parameter — the
+ *   name of the binary property where the file was previously stored.
+ *   Compatible with N8N_DEFAULT_BINARY_DATA_MODE=filesystem and database.
+ *
  * Available tools:
- *  - gotenberg_url_to_pdf        : Convert a public URL to a PDF file
- *  - gotenberg_html_to_pdf       : Convert an HTML string to a PDF file
- *  - gotenberg_url_screenshot    : Take a screenshot of a public URL
- *  - gotenberg_libreoffice_convert : Convert an office document (base64) to PDF
- *  - gotenberg_merge_pdfs        : Merge multiple PDFs (base64) into one
- *  - gotenberg_split_pdf         : Split a PDF (base64) into multiple files
- *  - gotenberg_flatten_pdf       : Flatten annotations/form fields in a PDF (base64)
- *  - gotenberg_read_pdf_metadata : Read metadata from a PDF (base64)
+ *  - gotenberg_url_to_pdf          : Convert a public URL to a PDF file
+ *  - gotenberg_html_to_pdf         : Convert an HTML string to a PDF file
+ *  - gotenberg_url_screenshot      : Take a screenshot of a public URL
+ *  - gotenberg_libreoffice_convert : Convert an office document to PDF (input via binary property)
+ *  - gotenberg_merge_pdfs          : Merge multiple PDFs into one (input via binary properties)
+ *  - gotenberg_split_pdf           : Split a PDF into multiple files (input via binary property)
+ *  - gotenberg_flatten_pdf         : Flatten annotations/form fields in a PDF (input via binary property)
+ *  - gotenberg_read_pdf_metadata   : Read metadata from a PDF (input via binary property)
  */
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
@@ -99,18 +107,30 @@ async function gotenbergPost(ctx, endpoint, formData, returnJson) {
 }
 
 /**
- * Convert a binary Buffer result to a base64 string (for returning to the AI agent).
- * Returns a concise summary including base64 data so the agent can pass it downstream.
+ * Store a binary buffer in n8n's binary data system (filesystem or database mode)
+ * and attach it to the current execution item. Returns a short JSON summary
+ * with the binary property name so the AI agent can reference it downstream.
+ *
+ * Compatible with N8N_DEFAULT_BINARY_DATA_MODE=filesystem and database.
+ * Works correctly with n8n v2 task runners (no in-memory mutation).
  */
-function bufferToBase64Result(buf, filename, mimeType) {
-    const b64 = Buffer.isBuffer(buf) ? buf.toString('base64') : Buffer.from(buf).toString('base64');
-    const sizeKb = Math.round((b64.length * 3 / 4) / 1024);
+let _binaryCounter = 0;
+async function storeBinaryOutput(ctx, buf, filename, mimeType) {
+    const buffer = Buffer.isBuffer(buf) ? buf : Buffer.from(buf);
+    const sizeKb = Math.round(buffer.length / 1024);
+    const binaryPropertyName = `gotenberg_file_${_binaryCounter++}`;
+    const binaryData = await ctx.helpers.prepareBinaryData(buffer, filename, mimeType);
+    const inputItems = ctx.getInputData();
+    const item = inputItems[0] || { json: {}, binary: {} };
+    if (!item.binary) item.binary = {};
+    item.binary[binaryPropertyName] = binaryData;
     return JSON.stringify({
         success: true,
+        binaryPropertyName,
         filename,
         mimeType,
         sizeKb,
-        base64: b64,
+        message: `File "${filename}" (${sizeKb} KB) stored in binary property "${binaryPropertyName}". Pass this binaryPropertyName to other tools that need this file.`,
     });
 }
 
@@ -162,27 +182,27 @@ class GotenbergAiTools {
                         {
                             name: 'LibreOffice Convert',
                             value: 'libreofficeConvert',
-                            description: 'Convert an office document (base64) to PDF using LibreOffice',
+                            description: 'Convert an office document to PDF using LibreOffice (accepts binary property reference)',
                         },
                         {
                             name: 'Merge PDFs',
                             value: 'mergePdfs',
-                            description: 'Merge multiple base64-encoded PDFs into a single PDF',
+                            description: 'Merge multiple PDFs into a single PDF (accepts binary property references)',
                         },
                         {
                             name: 'Split PDF',
                             value: 'splitPdf',
-                            description: 'Split a base64-encoded PDF into multiple parts',
+                            description: 'Split a PDF into multiple parts (accepts binary property reference)',
                         },
                         {
                             name: 'Flatten PDF',
                             value: 'flattenPdf',
-                            description: 'Flatten annotations and form fields in a base64-encoded PDF',
+                            description: 'Flatten annotations and form fields in a PDF (accepts binary property reference)',
                         },
                         {
                             name: 'Read PDF Metadata',
                             value: 'readMetadata',
-                            description: 'Read metadata from a base64-encoded PDF and return it as JSON',
+                            description: 'Read metadata from a PDF and return it as JSON (accepts binary property reference)',
                         },
                     ],
                     default: ['urlToPdf', 'htmlToPdf', 'urlScreenshot'],
@@ -284,13 +304,9 @@ class GotenbergAiTools {
 
         function endToolRun(runIndex, data) {
             try {
-                // Avoid storing huge base64 blobs in the execution log – use summary only
-                const logData = data && typeof data === 'object' && data.base64
-                    ? { ...data, base64: `[base64, ${data.sizeKb}kb]` }
-                    : data;
-                const json = (logData !== null && typeof logData === 'object' && !Array.isArray(logData))
-                    ? logData
-                    : { result: logData };
+                const json = (data !== null && typeof data === 'object' && !Array.isArray(data))
+                    ? data
+                    : { result: data };
                 self.addOutputData('ai_tool', runIndex, [[{ json }]]);
             } catch (_) { /* addOutputData may not be available in all n8n versions */ }
         }
@@ -316,11 +332,25 @@ class GotenbergAiTools {
             if (chromiumDefaults.waitDelay) formData.waitDelay = chromiumDefaults.waitDelay;
         }
 
-        // ── Helper to parse base64 input from AI agent ────────────────────────
-        function base64ToBuffer(b64) {
-            // Accept "data:...;base64,..." format or raw base64
-            const raw = b64.includes(',') ? b64.split(',')[1] : b64;
-            return Buffer.from(raw, 'base64');
+        /**
+         * Retrieve a binary buffer from n8n's binary data system by property name.
+         * This is the counterpart to storeBinaryOutput — it reads the file that
+         * was previously stored under a given binary property name.
+         */
+        async function getBinaryInputBuffer(binaryPropertyName) {
+            return self.helpers.getBinaryDataBuffer(0, binaryPropertyName);
+        }
+
+        /**
+         * Get the binary metadata (fileName, mimeType) for a binary property.
+         */
+        function getBinaryMeta(binaryPropertyName) {
+            const items = self.getInputData();
+            const item = items && items[0];
+            if (item && item.binary && item.binary[binaryPropertyName]) {
+                return item.binary[binaryPropertyName];
+            }
+            return null;
         }
 
         // ── Zod schema helpers ────────────────────────────────────────────────
@@ -335,7 +365,7 @@ class GotenbergAiTools {
                 name: 'gotenberg_url_to_pdf',
                 description: toolDescriptionOverride ||
                     'Convert a public web URL to a PDF file using headless Chromium via Gotenberg. ' +
-                    'Returns a base64-encoded PDF and its size in KB. ' +
+                    'Stores the resulting PDF in a binary property and returns its name. Pass the returned binaryPropertyName to other tools that need this file. ' +
                     'Use this when the user asks to save a webpage as PDF, generate a PDF report from a URL, or export a web page.',
                 schema: z ? z.object({
                     url: z.string().describe('The full public URL to convert to PDF (must be accessible by the Gotenberg server)'),
@@ -366,7 +396,7 @@ class GotenbergAiTools {
 
                         const responseBuffer = await gotenbergPost(self, '/forms/chromium/convert/url', formData);
                         const filename = output_filename || 'output.pdf';
-                        const resultStr = bufferToBase64Result(responseBuffer, filename, 'application/pdf');
+                        const resultStr = await storeBinaryOutput(self, responseBuffer, filename, 'application/pdf');
                         const result = JSON.parse(resultStr);
                         log('info', '[Gotenberg] gotenberg_url_to_pdf succeeded', { url, sizeKb: result.sizeKb });
                         endToolRun(runIndex, result);
@@ -387,7 +417,7 @@ class GotenbergAiTools {
                 name: 'gotenberg_html_to_pdf',
                 description: toolDescriptionOverride ||
                     'Convert an HTML string to a PDF file using headless Chromium via Gotenberg. ' +
-                    'Returns a base64-encoded PDF and its size in KB. ' +
+                    'Stores the resulting PDF in a binary property and returns its name. Pass the returned binaryPropertyName to other tools that need this file. ' +
                     'Use this when you need to render dynamic HTML content, custom-styled reports, invoices, or letters as PDF.',
                 schema: z ? z.object({
                     html: z.string().describe('Full HTML document content to convert (must be a complete HTML page with <html>, <head>, <body> tags)'),
@@ -424,7 +454,7 @@ class GotenbergAiTools {
 
                         const responseBuffer = await gotenbergPost(self, '/forms/chromium/convert/html', formData);
                         const filename = output_filename || 'output.pdf';
-                        const resultStr = bufferToBase64Result(responseBuffer, filename, 'application/pdf');
+                        const resultStr = await storeBinaryOutput(self, responseBuffer, filename, 'application/pdf');
                         const result = JSON.parse(resultStr);
                         log('info', '[Gotenberg] gotenberg_html_to_pdf succeeded', { sizeKb: result.sizeKb });
                         endToolRun(runIndex, result);
@@ -445,7 +475,7 @@ class GotenbergAiTools {
                 name: 'gotenberg_url_screenshot',
                 description: toolDescriptionOverride ||
                     'Take a screenshot of a public web URL using headless Chromium via Gotenberg. ' +
-                    'Returns a base64-encoded image (PNG by default). ' +
+                    'Stores the resulting image in a binary property and returns its name. Pass the returned binaryPropertyName to other tools that need this file. ' +
                     'Use this to visually capture a webpage, generate thumbnail previews, or verify a URL renders correctly.',
                 schema: z ? z.object({
                     url: z.string().describe('The full public URL to screenshot'),
@@ -467,7 +497,7 @@ class GotenbergAiTools {
 
                         const responseBuffer = await gotenbergPost(self, '/forms/chromium/screenshot/url', formData);
                         const filename = output_filename || `screenshot.${imgFormat}`;
-                        const resultStr = bufferToBase64Result(responseBuffer, filename, `image/${imgFormat}`);
+                        const resultStr = await storeBinaryOutput(self, responseBuffer, filename, `image/${imgFormat}`);
                         const result = JSON.parse(resultStr);
                         log('info', '[Gotenberg] gotenberg_url_screenshot succeeded', { url, sizeKb: result.sizeKb });
                         endToolRun(runIndex, result);
@@ -488,29 +518,30 @@ class GotenbergAiTools {
                 name: 'gotenberg_libreoffice_convert',
                 description: toolDescriptionOverride ||
                     'Convert an office document (Word, Excel, PowerPoint, ODT, ODS, ODP, CSV…) to PDF using LibreOffice via Gotenberg. ' +
-                    'The document must be provided as a base64-encoded string. ' +
-                    'Returns a base64-encoded PDF. ' +
+                    'The document must be provided via binary_property_name — the name of the binary property where the file was stored by a previous tool (e.g., telegram_get_file). ' +
+                    'Stores the resulting PDF in a new binary property and returns its name. ' +
                     'Use this when the user needs to convert office files to PDF format.',
                 schema: z ? z.object({
-                    file_base64: z.string().describe('Base64-encoded office document content'),
-                    filename: z.string().describe('Original filename including extension (e.g., "report.docx", "data.xlsx")'),
+                    binary_property_name: z.string().describe('Name of the binary property containing the office document (e.g., the binaryPropertyName returned by telegram_get_file or another tool that stored a file)'),
+                    filename: strOpt('Original filename including extension (e.g., "report.docx", "data.xlsx"). If omitted, uses the filename from the binary property.'),
                     landscape: boolOpt('Use landscape orientation'),
                     page_ranges: strOpt('Page ranges to export, e.g., "1-3,5"'),
                     pdfa: strOpt('Convert to PDF/A: "PDF/A-1a" | "PDF/A-2b" | "PDF/A-3b"'),
                     output_filename: strOpt('Desired filename for the output PDF (default: output.pdf)'),
                 }) : null,
-                func: async ({ file_base64, filename, landscape, page_ranges, pdfa, output_filename } = {}) => {
+                func: async ({ binary_property_name, filename, landscape, page_ranges, pdfa, output_filename } = {}) => {
                     const runIndex = startToolRun({ tool: 'gotenberg_libreoffice_convert', filename });
                     log('debug', '[Gotenberg] gotenberg_libreoffice_convert called', { filename });
                     try {
-                        if (!file_base64) return JSON.stringify({ error: 'file_base64 is required' });
-                        if (!filename) return JSON.stringify({ error: 'filename is required' });
+                        if (!binary_property_name) return JSON.stringify({ error: 'binary_property_name is required' });
 
-                        const buffer = base64ToBuffer(file_base64);
+                        const buffer = await getBinaryInputBuffer(binary_property_name);
+                        const meta = getBinaryMeta(binary_property_name);
+                        const resolvedFilename = filename || (meta && meta.fileName) || 'document.docx';
                         const formData = {
                             files: {
                                 value: buffer,
-                                options: { filename, contentType: 'application/octet-stream' },
+                                options: { filename: resolvedFilename, contentType: 'application/octet-stream' },
                             },
                         };
                         if (landscape !== undefined) formData.landscape = String(landscape);
@@ -519,9 +550,9 @@ class GotenbergAiTools {
 
                         const responseBuffer = await gotenbergPost(self, '/forms/libreoffice/convert', formData);
                         const outFilename = output_filename || 'output.pdf';
-                        const resultStr = bufferToBase64Result(responseBuffer, outFilename, 'application/pdf');
+                        const resultStr = await storeBinaryOutput(self, responseBuffer, outFilename, 'application/pdf');
                         const result = JSON.parse(resultStr);
-                        log('info', '[Gotenberg] gotenberg_libreoffice_convert succeeded', { filename, sizeKb: result.sizeKb });
+                        log('info', '[Gotenberg] gotenberg_libreoffice_convert succeeded', { filename: resolvedFilename, sizeKb: result.sizeKb });
                         endToolRun(runIndex, result);
                         return resultStr;
                     } catch (err) {
@@ -540,16 +571,16 @@ class GotenbergAiTools {
                 name: 'gotenberg_merge_pdfs',
                 description: toolDescriptionOverride ||
                     'Merge multiple PDF files into a single PDF using Gotenberg PDF Engines. ' +
-                    'Each PDF must be provided as a base64-encoded string in the "pdfs" array. ' +
+                    'Each PDF must be referenced by its binary property name (binaryPropertyName) returned by a previous tool. ' +
                     'Files are merged in the order provided. ' +
-                    'Returns a base64-encoded merged PDF.',
+                    'Stores the merged PDF in a new binary property and returns its name.',
                 schema: z ? z.object({
                     pdfs: z.array(
                         z.object({
-                            base64: z.string().describe('Base64-encoded PDF content'),
+                            binary_property_name: z.string().describe('Name of the binary property containing the PDF file (binaryPropertyName from a previous tool)'),
                             filename: strOpt('Filename for ordering (e.g., "001.pdf"). Files are sorted alphabetically by filename.'),
                         })
-                    ).describe('Array of PDFs to merge in order'),
+                    ).describe('Array of PDF references to merge in order'),
                     output_filename: strOpt('Desired filename for the merged output (default: merged.pdf)'),
                 }) : null,
                 func: async ({ pdfs, output_filename } = {}) => {
@@ -558,18 +589,23 @@ class GotenbergAiTools {
                     try {
                         if (!pdfs || pdfs.length === 0) return JSON.stringify({ error: 'pdfs array is required and must not be empty' });
 
-                        const fileList = pdfs.map((p, idx) => ({
-                            value: base64ToBuffer(p.base64),
-                            options: {
-                                filename: p.filename || `${String(idx + 1).padStart(4, '0')}.pdf`,
-                                contentType: 'application/pdf',
-                            },
-                        }));
+                        const fileList = [];
+                        for (let idx = 0; idx < pdfs.length; idx++) {
+                            const p = pdfs[idx];
+                            const buf = await getBinaryInputBuffer(p.binary_property_name);
+                            fileList.push({
+                                value: buf,
+                                options: {
+                                    filename: p.filename || `${String(idx + 1).padStart(4, '0')}.pdf`,
+                                    contentType: 'application/pdf',
+                                },
+                            });
+                        }
 
                         const formData = { files: fileList };
                         const responseBuffer = await gotenbergPost(self, '/forms/pdfengines/merge', formData);
                         const outFilename = output_filename || 'merged.pdf';
-                        const resultStr = bufferToBase64Result(responseBuffer, outFilename, 'application/pdf');
+                        const resultStr = await storeBinaryOutput(self, responseBuffer, outFilename, 'application/pdf');
                         const result = JSON.parse(resultStr);
                         log('info', '[Gotenberg] gotenberg_merge_pdfs succeeded', { count: pdfs.length, sizeKb: result.sizeKb });
                         endToolRun(runIndex, result);
@@ -590,21 +626,21 @@ class GotenbergAiTools {
                 name: 'gotenberg_split_pdf',
                 description: toolDescriptionOverride ||
                     'Split a PDF into multiple files using Gotenberg PDF Engines. ' +
-                    'The PDF must be provided as a base64-encoded string. ' +
-                    'Returns a base64-encoded ZIP archive containing the split PDF files.',
+                    'The PDF must be referenced by its binary property name (binaryPropertyName from a previous tool). ' +
+                    'Stores the resulting ZIP archive in a new binary property and returns its name.',
                 schema: z ? z.object({
-                    pdf_base64: z.string().describe('Base64-encoded PDF to split'),
+                    binary_property_name: z.string().describe('Name of the binary property containing the PDF to split (binaryPropertyName from a previous tool)'),
                     split_mode: strOpt('"intervals" (split every N pages) | "pages" (split at specific ranges). Default: intervals'),
                     split_span: strOpt('For intervals: number of pages per chunk (e.g., "1"). For pages: comma-separated ranges (e.g., "1-3,5"). Default: "1"'),
                     output_filename: strOpt('Desired filename for the output (default: split.zip)'),
                 }) : null,
-                func: async ({ pdf_base64, split_mode, split_span, output_filename } = {}) => {
+                func: async ({ binary_property_name, split_mode, split_span, output_filename } = {}) => {
                     const runIndex = startToolRun({ tool: 'gotenberg_split_pdf', split_mode, split_span });
                     log('debug', '[Gotenberg] gotenberg_split_pdf called', { split_mode, split_span });
                     try {
-                        if (!pdf_base64) return JSON.stringify({ error: 'pdf_base64 is required' });
+                        if (!binary_property_name) return JSON.stringify({ error: 'binary_property_name is required' });
 
-                        const buffer = base64ToBuffer(pdf_base64);
+                        const buffer = await getBinaryInputBuffer(binary_property_name);
                         const formData = {
                             files: { value: buffer, options: { filename: 'document.pdf', contentType: 'application/pdf' } },
                             splitMode: split_mode || 'intervals',
@@ -613,7 +649,7 @@ class GotenbergAiTools {
 
                         const responseBuffer = await gotenbergPost(self, '/forms/pdfengines/split', formData);
                         const outFilename = output_filename || 'split.zip';
-                        const resultStr = bufferToBase64Result(responseBuffer, outFilename, 'application/zip');
+                        const resultStr = await storeBinaryOutput(self, responseBuffer, outFilename, 'application/zip');
                         const result = JSON.parse(resultStr);
                         log('info', '[Gotenberg] gotenberg_split_pdf succeeded', { sizeKb: result.sizeKb });
                         endToolRun(runIndex, result);
@@ -634,26 +670,26 @@ class GotenbergAiTools {
                 name: 'gotenberg_flatten_pdf',
                 description: toolDescriptionOverride ||
                     'Flatten a PDF by removing interactive annotations and making form field values permanent (non-editable) using Gotenberg. ' +
-                    'The PDF must be provided as a base64-encoded string. ' +
-                    'Returns a base64-encoded flattened PDF.',
+                    'The PDF must be referenced by its binary property name (binaryPropertyName from a previous tool). ' +
+                    'Stores the flattened PDF in a new binary property and returns its name.',
                 schema: z ? z.object({
-                    pdf_base64: z.string().describe('Base64-encoded PDF to flatten'),
+                    binary_property_name: z.string().describe('Name of the binary property containing the PDF to flatten (binaryPropertyName from a previous tool)'),
                     output_filename: strOpt('Desired filename for the output (default: flattened.pdf)'),
                 }) : null,
-                func: async ({ pdf_base64, output_filename } = {}) => {
+                func: async ({ binary_property_name, output_filename } = {}) => {
                     const runIndex = startToolRun({ tool: 'gotenberg_flatten_pdf' });
                     log('debug', '[Gotenberg] gotenberg_flatten_pdf called');
                     try {
-                        if (!pdf_base64) return JSON.stringify({ error: 'pdf_base64 is required' });
+                        if (!binary_property_name) return JSON.stringify({ error: 'binary_property_name is required' });
 
-                        const buffer = base64ToBuffer(pdf_base64);
+                        const buffer = await getBinaryInputBuffer(binary_property_name);
                         const formData = {
                             files: { value: buffer, options: { filename: 'document.pdf', contentType: 'application/pdf' } },
                         };
 
                         const responseBuffer = await gotenbergPost(self, '/forms/pdfengines/flatten', formData);
                         const outFilename = output_filename || 'flattened.pdf';
-                        const resultStr = bufferToBase64Result(responseBuffer, outFilename, 'application/pdf');
+                        const resultStr = await storeBinaryOutput(self, responseBuffer, outFilename, 'application/pdf');
                         const result = JSON.parse(resultStr);
                         log('info', '[Gotenberg] gotenberg_flatten_pdf succeeded', { sizeKb: result.sizeKb });
                         endToolRun(runIndex, result);
@@ -674,18 +710,18 @@ class GotenbergAiTools {
                 name: 'gotenberg_read_pdf_metadata',
                 description: toolDescriptionOverride ||
                     'Read metadata from a PDF file using Gotenberg PDF Engines. ' +
-                    'The PDF must be provided as a base64-encoded string. ' +
+                    'The PDF must be referenced by its binary property name (binaryPropertyName from a previous tool). ' +
                     'Returns a JSON object with metadata properties such as Author, Title, Subject, Keywords, Creator, Producer, CreationDate, ModDate, and more.',
                 schema: z ? z.object({
-                    pdf_base64: z.string().describe('Base64-encoded PDF to read metadata from'),
+                    binary_property_name: z.string().describe('Name of the binary property containing the PDF to read metadata from (binaryPropertyName from a previous tool)'),
                 }) : null,
-                func: async ({ pdf_base64 } = {}) => {
+                func: async ({ binary_property_name } = {}) => {
                     const runIndex = startToolRun({ tool: 'gotenberg_read_pdf_metadata' });
                     log('debug', '[Gotenberg] gotenberg_read_pdf_metadata called');
                     try {
-                        if (!pdf_base64) return JSON.stringify({ error: 'pdf_base64 is required' });
+                        if (!binary_property_name) return JSON.stringify({ error: 'binary_property_name is required' });
 
-                        const buffer = base64ToBuffer(pdf_base64);
+                        const buffer = await getBinaryInputBuffer(binary_property_name);
                         const formData = {
                             files: { value: buffer, options: { filename: 'document.pdf', contentType: 'application/pdf' } },
                         };
