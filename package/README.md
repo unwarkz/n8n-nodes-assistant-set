@@ -46,8 +46,8 @@ Restart n8n to load the nodes.
 | Tool | Description |
 |------|-------------|
 | `telegram_send_message` | Send text messages with formatting |
-| `telegram_send_photo` | Send photos (file_id, URL, or base64) |
-| `telegram_send_document` | Send documents/files (base64 compatible with Gotenberg output) |
+| `telegram_send_photo` | Send photos (file_id, URL, or binary property reference) |
+| `telegram_send_document` | Send documents/files (accepts binary property reference from other tools) |
 | `telegram_send_video` | Send videos |
 | `telegram_send_audio` | Send audio files |
 | `telegram_send_voice` | Send voice messages |
@@ -57,7 +57,7 @@ Restart n8n to load the nodes.
 | `telegram_forward_message` | Forward messages between chats |
 | `telegram_edit_message` | Edit sent messages |
 | `telegram_delete_message` | Delete messages |
-| `telegram_get_file` | Download files (returns base64 for cross-tool use) |
+| `telegram_get_file` | Download files (stores in binary property for cross-tool use) |
 | `telegram_send_chat_action` | Show typing/uploading indicators |
 | `telegram_get_chat` | Get chat information |
 | `telegram_send_sticker` | Send stickers |
@@ -72,11 +72,11 @@ Restart n8n to load the nodes.
 | `gotenberg_url_to_pdf` | Convert a public URL to a PDF |
 | `gotenberg_html_to_pdf` | Convert an HTML string to PDF |
 | `gotenberg_url_screenshot` | Take a screenshot of a URL |
-| `gotenberg_libreoffice_convert` | Convert an office document (base64) to PDF |
-| `gotenberg_merge_pdfs` | Merge multiple base64 PDFs into one |
-| `gotenberg_split_pdf` | Split a base64 PDF into parts |
-| `gotenberg_flatten_pdf` | Flatten a base64 PDF |
-| `gotenberg_read_pdf_metadata` | Read metadata from a base64 PDF |
+| `gotenberg_libreoffice_convert` | Convert an office document to PDF (accepts binary property reference) |
+| `gotenberg_merge_pdfs` | Merge multiple PDFs into one (accepts binary property references) |
+| `gotenberg_split_pdf` | Split a PDF into parts (accepts binary property reference) |
+| `gotenberg_flatten_pdf` | Flatten a PDF (accepts binary property reference) |
+| `gotenberg_read_pdf_metadata` | Read metadata from a PDF (accepts binary property reference) |
 
 
 ## Node Reference
@@ -250,17 +250,10 @@ Full CRUD node covering the complete [Telegram Bot API](https://core.telegram.or
 
 ## Cross-Tool Data Interop
 
-The AI Tools node uses a standardized data format compatible with other tool nodes (e.g., Gotenberg):
-
-```json
-{
-  "success": true,
-  "filename": "document.pdf",
-  "mimeType": "application/pdf",
-  "sizeKb": 142,
-  "base64": "JVBERi0xLjQ..."
-}
-```
+The AI Tools nodes use **n8n native binary references** for file exchange — no base64 in the AI context.
+Tools that produce files store them via `prepareBinaryData` and return a `binaryPropertyName`.
+Tools that consume files accept a `binary_property_name` parameter and read data via `getBinaryDataBuffer`.
+Compatible with `N8N_DEFAULT_BINARY_DATA_MODE=filesystem` and `database`.
 
 **Example workflows with AI Agent:**
 - Download document from Telegram → Convert with Gotenberg → Send back to Telegram
