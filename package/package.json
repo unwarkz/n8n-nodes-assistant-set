@@ -32,7 +32,8 @@
       "dist/credentials/Mem0Api.credentials.js",
       "dist/credentials/Mem0SelfHostedApi.credentials.js",
       "dist/credentials/GotenbergApi.credentials.js",
-      "dist/credentials/TelegramBotApi.credentials.js"
+      "dist/credentials/TelegramBotApi.credentials.js",
+      "dist/credentials/QdrantApi.credentials.js"
     ],
     "nodes": [
       "dist/nodes/Mem0/Mem0.node.js",
@@ -41,7 +42,9 @@
       "dist/nodes/gotenberg/Gotenberg.node.js",
       "dist/nodes/gotenberg/GotenbergAiTools.node.js",
       "dist/nodes/telegram/TelegramBot.node.js",
-      "dist/nodes/telegram/TelegramBotAiTools.node.js"
+      "dist/nodes/telegram/TelegramBotAiTools.node.js",
+      "dist/nodes/qdrant/QdrantStoreAiTools.node.js",
+      "dist/nodes/qdrant/QdrantAiTools.node.js"
     ]
   },
   "keywords": [
