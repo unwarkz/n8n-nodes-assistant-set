@@ -1,6 +1,6 @@
 {
   "name": "@unwarkz/n8n-nodes-assistant-set",
-  "version": "1.1.4",
+  "version": "1.1.5",
   "description": "N8N community node package — full assistant set: Mem0 memory, Gotenberg PDF, Telegram Bot, Outline Wiki, Qdrant vector store (regular + AI tools)",
   "license": "MIT",
   "homepage": "https://github.com/unwarkz/n8n-nodes-assistant-set#readme",
