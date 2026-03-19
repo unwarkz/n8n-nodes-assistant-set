@@ -5,7 +5,7 @@
   "license": "MIT",
   "homepage": "https://github.com/unwarkz/n8n-nodes-mem0-api-server#readme",
   "author": {
-    "name": "unwarkz"
+    "name": "unwarkz <unwarkz@gmail.com>"
   },
   "repository": {
     "type": "git",
@@ -76,14 +76,14 @@
     "knowledgebase"
   ],
   "devDependencies": {
-    "@types/node": "^18.16.0",
-    "gulp": "^4.0.2",
-    "n8n-workflow": "^1.120.9",
-    "prettier": "^2.8.8",
-    "tslint": "^6.1.3",
-    "typescript": "^5.1.6"
+    "@types/node": "^24.0.0",
+    "gulp": "^5.0.0",
+    "n8n-workflow": "^1.250.0",
+    "prettier": "^3.5.0",
+    "typescript": "^5.8.0",
+    "eslint": "^9.x" 
   },
   "peerDependencies": {
-    "n8n-workflow": ">=1.0.0"
+    "n8n-workflow": ">=1.250.0"
   }
 }
