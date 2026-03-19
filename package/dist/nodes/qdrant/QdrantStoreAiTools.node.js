@@ -87,9 +87,9 @@ async function qdrantRequest(ctx, method, path, body) {
     const baseUrl = (credentials.qdrantUrl || 'http://localhost:6333').replace(/\/$/, '');
     const headers = { 'Content-Type': 'application/json' };
     if (credentials.apiKey) headers['api-key'] = String(credentials.apiKey);
-    const options = { method, url: `${baseUrl}${path}`, headers, json: true };
+    const options = { method, url: `${baseUrl}${path}`, headers };
     if (body !== undefined) options.body = body;
-    return ctx.helpers.request(options);
+    return ctx.helpers.httpRequest(options);
 }
 
 /**

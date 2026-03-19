@@ -99,11 +99,10 @@ async function gotenbergPost(ctx, endpoint, formData, returnJson) {
         url: `${baseUrl}${endpoint}`,
         formData,
         headers,
-        encoding: null,
-        json: returnJson === true,
+        ...(returnJson !== true && { encoding: 'arraybuffer' }),
     };
 
-    return ctx.helpers.request(options);
+    return ctx.helpers.httpRequest(options);
 }
 
 /**

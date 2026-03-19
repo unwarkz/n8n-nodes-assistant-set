@@ -11,10 +11,9 @@ async function telegramApiRequest(ctx, method, body = {}) {
         method: 'POST',
         url: `${baseUrl}/bot${token}/${method}`,
         body,
-        json: true,
     };
     try {
-        const response = await ctx.helpers.request(requestOptions);
+        const response = await ctx.helpers.httpRequest(requestOptions);
         if (response && response.ok === false) {
             throw new Error(response.description || 'Telegram API error');
         }
@@ -32,10 +31,9 @@ async function telegramApiRequestMultipart(ctx, method, formData) {
         method: 'POST',
         url: `${baseUrl}/bot${token}/${method}`,
         formData,
-        json: true,
     };
     try {
-        const response = await ctx.helpers.request(requestOptions);
+        const response = await ctx.helpers.httpRequest(requestOptions);
         if (response && response.ok === false) {
             throw new Error(response.description || 'Telegram API error');
         }

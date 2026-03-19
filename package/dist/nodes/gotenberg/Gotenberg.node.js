@@ -28,12 +28,11 @@ async function gotenbergRequest(endpoint, formData, returnJson) {
         url: `${baseUrl}${endpoint}`,
         formData,
         headers,
-        encoding: null,
-        json: returnJson === true,
+        ...(returnJson !== true && { encoding: 'arraybuffer' }),
     };
 
     try {
-        return await this.helpers.request(options);
+        return await this.helpers.httpRequest(options);
     } catch (error) {
         throw new n8n_workflow_1.NodeApiError(this.getNode(), error);
     }

@@ -93,9 +93,8 @@ async function outlinePost(ctx, endpoint, body) {
         url: `${baseUrl}/api${endpoint}`,
         headers,
         body: JSON.stringify(body || {}),
-        json: true,
     };
-    return ctx.helpers.request(options);
+    return ctx.helpers.httpRequest(options);
 }
 
 async function outlinePostMultipart(ctx, endpoint, formData) {
@@ -108,9 +107,8 @@ async function outlinePostMultipart(ctx, endpoint, formData) {
             'Accept': 'application/json',
         },
         formData,
-        json: true,
     };
-    return ctx.helpers.request(options);
+    return ctx.helpers.httpRequest(options);
 }
 
 // Process-global registry shared across all AI tool modules.
@@ -1256,11 +1254,10 @@ class OutlineAiTools {
                             options: { filename: resolvedFilename, contentType },
                         };
 
-                        await self.helpers.request({
+                        await self.helpers.httpRequest({
                             method: 'POST',
                             url: uploadUrl,
                             formData: uploadFormData,
-                            json: false,
                         });
 
                         const result = {
