@@ -1,0 +1,50 @@
+{
+  "name": "@unwarkz/n8n-nodes-outline-wiki",
+  "version": "1.0.0",
+  "description": "N8N community node for Outline Wiki - full Outline API coverage with AI Agent tools (documents, collections, comments, attachments, users, shares)",
+  "license": "MIT",
+  "homepage": "https://github.com/unwarkz/n8n-nodes-mem0-api-server#readme",
+  "author": {
+    "name": "unwarkz"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/unwarkz/n8n-nodes-mem0-api-server.git"
+  },
+  "bugs": {
+    "url": "https://github.com/unwarkz/n8n-nodes-mem0-api-server/issues"
+  },
+  "main": "index.js",
+  "scripts": {
+    "prepublishOnly": "echo 'Skipping build - dist files are pre-built'"
+  },
+  "files": [
+    "dist",
+    "index.js"
+  ],
+  "n8n": {
+    "n8nNodesApiVersion": 1,
+    "credentials": [
+      "dist/credentials/OutlineApi.credentials.js"
+    ],
+    "nodes": [
+      "dist/nodes/outline/OutlineAiTools.node.js"
+    ]
+  },
+  "keywords": [
+    "n8n-community-node-package",
+    "n8n",
+    "outline",
+    "outline-wiki",
+    "wiki",
+    "knowledge-base",
+    "knowledge-management",
+    "documents",
+    "ai",
+    "llm",
+    "ai-tools"
+  ],
+  "peerDependencies": {
+    "n8n-workflow": ">=1.0.0"
+  }
+}

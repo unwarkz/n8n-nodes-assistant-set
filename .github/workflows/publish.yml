@@ -36,6 +36,7 @@ jobs:
           node --check dist/credentials/Mem0SelfHostedApi.credentials.js
           node --check dist/credentials/GotenbergApi.credentials.js
           node --check dist/credentials/TelegramBotApi.credentials.js
+          node --check dist/credentials/OutlineApi.credentials.js
           node --check dist/nodes/Mem0/Mem0.node.js
           node --check dist/nodes/Mem0/Mem0Memory.node.js
           node --check dist/nodes/Mem0/Mem0AiTools.node.js
@@ -43,6 +44,7 @@ jobs:
           node --check dist/nodes/gotenberg/GotenbergAiTools.node.js
           node --check dist/nodes/telegram/TelegramBot.node.js
           node --check dist/nodes/telegram/TelegramBotAiTools.node.js
+          node --check dist/nodes/outline/OutlineAiTools.node.js
           echo "✅ All files pass syntax check"
 
       - name: Bump version
