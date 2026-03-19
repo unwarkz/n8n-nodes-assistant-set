@@ -65,9 +65,18 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           npm version ${{ github.event.inputs.version_bump }} --no-git-tag-version --prefix mem0-package
           git add mem0-package/package.json
-          git commit -m "chore: bump mem0 version [${{ github.event.inputs.version_bump }}] [skip ci]"
-          git push --force-with-lease
 
+          if git diff --cached --quiet; then
+            echo "No version change to commit"
+            exit 0
+          fi
+
+          git commit -m "chore: bump mem0 version [${{ github.event.inputs.version_bump }}] [skip ci]"
+          git fetch origin master
+          git rebase origin/master
+          git push origin HEAD:master
+
+          
       - name: Publish to npm
         run: npm publish --access public --provenance
         env:
