@@ -18,10 +18,9 @@ async function outlineApiRequest(ctx, endpoint, body) {
             'Accept': 'application/json',
         },
         body: JSON.stringify(body || {}),
-        json: true,
     };
     try {
-        return await ctx.helpers.request(options);
+        return await ctx.helpers.httpRequest(options);
     } catch (error) {
         throw new n8n_workflow_1.NodeApiError(ctx.getNode(), error);
     }
@@ -39,10 +38,9 @@ async function outlineApiRequestMultipart(ctx, endpoint, formData) {
             'Accept': 'application/json',
         },
         formData,
-        json: true,
     };
     try {
-        return await ctx.helpers.request(options);
+        return await ctx.helpers.httpRequest(options);
     } catch (error) {
         throw new n8n_workflow_1.NodeApiError(ctx.getNode(), error);
     }
@@ -1546,11 +1544,10 @@ class Outline {
                             value: buffer,
                             options: { filename: resolvedFilename, contentType },
                         };
-                        await this.helpers.request({
+                        await this.helpers.httpRequest({
                             method: 'POST',
                             url: uploadUrl,
                             formData: uploadFormData,
-                            json: false,
                         });
 
                         responseData = {

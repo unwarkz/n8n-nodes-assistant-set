@@ -42,7 +42,6 @@ async function mem0ApiRequest(method, endpoint, body = {}, qs = {}) {
         body,
         qs,
         url: `${baseUrl}${resolvedEndpoint}`,
-        json: true,
     };
     if (credentials.apiKey) {
         options.headers = {
@@ -52,7 +51,7 @@ async function mem0ApiRequest(method, endpoint, body = {}, qs = {}) {
         };
     }
     try {
-        return await this.helpers.request(options);
+        return await this.helpers.httpRequest(options);
     }
     catch (error) {
         throw new n8n_workflow_1.NodeApiError(this.getNode(), error);

@@ -59,9 +59,8 @@ async function telegramApiPost(ctx, method, body) {
         method: 'POST',
         url: `${baseUrl}/bot${token}/${method}`,
         body,
-        json: true,
     };
-    return ctx.helpers.request(options);
+    return ctx.helpers.httpRequest(options);
 }
 
 async function telegramApiMultipart(ctx, method, formData) {
@@ -72,9 +71,8 @@ async function telegramApiMultipart(ctx, method, formData) {
         method: 'POST',
         url: `${baseUrl}/bot${token}/${method}`,
         formData,
-        json: true,
     };
-    return ctx.helpers.request(options);
+    return ctx.helpers.httpRequest(options);
 }
 
 async function downloadTelegramFile(ctx, filePath) {
@@ -84,9 +82,9 @@ async function downloadTelegramFile(ctx, filePath) {
     const options = {
         method: 'GET',
         url: `${baseUrl}/file/bot${token}/${filePath}`,
-        encoding: null,
+        encoding: 'arraybuffer',
     };
-    return ctx.helpers.request(options);
+    return ctx.helpers.httpRequest(options);
 }
 
 /**
