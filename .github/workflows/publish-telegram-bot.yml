@@ -23,13 +23,16 @@ jobs:
       run:
         working-directory: telegram-bot-package
 
+
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
-          node-version: '20'
+          node-version: '24'
           registry-url: 'https://registry.npmjs.org'
 
       - name: Sync dist files from package/dist
@@ -57,7 +60,15 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           npm version ${{ github.event.inputs.version_bump }} --no-git-tag-version --prefix telegram-bot-package
           git add telegram-bot-package/package.json
+
+          if git diff --cached --quiet; then
+            echo "No version change to commit"
+            exit 0
+          fi
+
           git commit -m "chore: bump telegram-bot version [${{ github.event.inputs.version_bump }}] [skip ci]"
+          git fetch origin master
+          git rebase origin/master
           git push origin HEAD:master
 
       - name: Publish to npm
