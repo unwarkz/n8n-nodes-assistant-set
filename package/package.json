@@ -1,7 +1,7 @@
 {
   "name": "@unwarkz/n8n-nodes-assistant-set",
   "version": "1.1.1",
-  "description": "N8N community node package — full assistant set: Mem0 memory, Gotenberg PDF, Telegram Bot, Qdrant vector store (regular + AI tools)",
+  "description": "N8N community node package — full assistant set: Mem0 memory, Gotenberg PDF, Telegram Bot, Outline Wiki, Qdrant vector store (regular + AI tools)",
   "license": "MIT",
   "homepage": "https://github.com/unwarkz/n8n-nodes-mem0-api-server#readme",
   "author": {
@@ -33,6 +33,7 @@
       "dist/credentials/Mem0SelfHostedApi.credentials.js",
       "dist/credentials/GotenbergApi.credentials.js",
       "dist/credentials/TelegramBotApi.credentials.js",
+      "dist/credentials/OutlineApi.credentials.js",
       "dist/credentials/QdrantApi.credentials.js"
     ],
     "nodes": [
@@ -43,6 +44,8 @@
       "dist/nodes/gotenberg/GotenbergAiTools.node.js",
       "dist/nodes/telegram/TelegramBot.node.js",
       "dist/nodes/telegram/TelegramBotAiTools.node.js",
+      "dist/nodes/outline/Outline.node.js",
+      "dist/nodes/outline/OutlineAiTools.node.js",
       "dist/nodes/qdrant/QdrantStoreAiTools.node.js",
       "dist/nodes/qdrant/QdrantAiTools.node.js"
     ]
@@ -60,6 +63,10 @@
     "telegram",
     "telegram-bot",
     "bot-api",
+    "outline",
+    "wiki",
+    "knowledge-base",
+    "outline-wiki",
     "qdrant",
     "vector-store",
     "vector-database",
