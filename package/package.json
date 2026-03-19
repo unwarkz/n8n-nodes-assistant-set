@@ -1,7 +1,7 @@
 {
   "name": "@unwarkz/n8n-nodes-assistant-set",
   "version": "1.1.1",
-  "description": "N8N community node package — full assistant set: Mem0 memory, Gotenberg PDF, Telegram Bot (regular + AI tools)",
+  "description": "N8N community node package — full assistant set: Mem0 memory, Gotenberg PDF, Telegram Bot, Qdrant vector store (regular + AI tools)",
   "license": "MIT",
   "homepage": "https://github.com/unwarkz/n8n-nodes-mem0-api-server#readme",
   "author": {
@@ -32,7 +32,8 @@
       "dist/credentials/Mem0Api.credentials.js",
       "dist/credentials/Mem0SelfHostedApi.credentials.js",
       "dist/credentials/GotenbergApi.credentials.js",
-      "dist/credentials/TelegramBotApi.credentials.js"
+      "dist/credentials/TelegramBotApi.credentials.js",
+      "dist/credentials/QdrantApi.credentials.js"
     ],
     "nodes": [
       "dist/nodes/Mem0/Mem0.node.js",
@@ -41,7 +42,9 @@
       "dist/nodes/gotenberg/Gotenberg.node.js",
       "dist/nodes/gotenberg/GotenbergAiTools.node.js",
       "dist/nodes/telegram/TelegramBot.node.js",
-      "dist/nodes/telegram/TelegramBotAiTools.node.js"
+      "dist/nodes/telegram/TelegramBotAiTools.node.js",
+      "dist/nodes/qdrant/QdrantStoreAiTools.node.js",
+      "dist/nodes/qdrant/QdrantAiTools.node.js"
     ]
   },
   "keywords": [
@@ -56,7 +59,14 @@
     "pdf",
     "telegram",
     "telegram-bot",
-    "bot-api"
+    "bot-api",
+    "qdrant",
+    "vector-store",
+    "vector-database",
+    "embeddings",
+    "semantic-search",
+    "rag",
+    "knowledgebase"
   ],
   "devDependencies": {
     "@types/node": "^18.16.0",

@@ -1,0 +1,78 @@
+name: Publish Qdrant to npm
+
+on:
+  workflow_dispatch:
+    inputs:
+      version_bump:
+        description: 'Version bump type'
+        required: true
+        default: 'patch'
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    defaults:
+      run:
+        working-directory: qdrant-package
+    concurrency:
+      group: publish-qdrant
+      cancel-in-progress: false
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Sync dist files from package/dist
+        working-directory: .
+        run: |
+          mkdir -p qdrant-package/dist/nodes/qdrant
+          mkdir -p qdrant-package/dist/credentials
+          cp package/dist/nodes/qdrant/QdrantStoreAiTools.node.js  qdrant-package/dist/nodes/qdrant/QdrantStoreAiTools.node.js
+          cp package/dist/nodes/qdrant/QdrantAiTools.node.js        qdrant-package/dist/nodes/qdrant/QdrantAiTools.node.js
+          cp package/dist/nodes/qdrant/qdrant.svg                   qdrant-package/dist/nodes/qdrant/qdrant.svg
+          cp package/dist/credentials/QdrantApi.credentials.js      qdrant-package/dist/credentials/QdrantApi.credentials.js
+
+      - name: Validate node syntax
+        working-directory: .
+        run: |
+          node --check qdrant-package/dist/credentials/QdrantApi.credentials.js
+          node --check qdrant-package/dist/nodes/qdrant/QdrantStoreAiTools.node.js
+          node --check qdrant-package/dist/nodes/qdrant/QdrantAiTools.node.js
+          echo "✅ All files pass syntax check"
+
+      - name: Bump version
+        working-directory: .
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          npm version ${{ github.event.inputs.version_bump }} --no-git-tag-version --prefix qdrant-package
+          git add qdrant-package/package.json
+
+          if git diff --cached --quiet; then
+            echo "No version change to commit"
+            exit 0
+          fi
+
+          git commit -m "chore: bump qdrant version [${{ github.event.inputs.version_bump }}] [skip ci]"
+          git fetch origin master
+          git rebase origin/master
+          git push origin HEAD:master
+
+      - name: Publish to npm
+        run: npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NODE_AUTH_TOKEN }}
