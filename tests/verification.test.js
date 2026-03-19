@@ -92,7 +92,7 @@ describe('Package source verification', () => {
       // Must have repository URL pointing to this GitHub repo
       expect(pj.repository).toBeDefined();
       expect(pj.repository.url).toContain(
-        'github.com/unwarkz/n8n-nodes-mem0-api-server',
+        'github.com/unwarkz/n8n-nodes-assistant-set',
       );
 
       // License must be MIT
