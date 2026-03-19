@@ -72,23 +72,6 @@ All node source code lives in `package/dist/`. The standalone packages have thei
 
 ## Cross-Tool Interoperability
 
-AI tool nodes use **n8n native binary references** for file exchange — no base64 in the AI context.
-Tools that produce files store them via `prepareBinaryData` and return a short JSON:
-
-```json
-{
-  "success": true,
-  "binaryPropertyName": "gotenberg_file_0",
-  "filename": "output.pdf",
-  "mimeType": "application/pdf",
-  "sizeKb": 142,
-  "message": "File \"output.pdf\" (142 KB) stored in binary property \"gotenberg_file_0\". Pass this binaryPropertyName to other tools that need this file."
-}
-```
-
-Tools that consume files accept a `binary_property_name` parameter and read the data
-via `getBinaryDataBuffer`. Compatible with `N8N_DEFAULT_BINARY_DATA_MODE=filesystem` and `database`.
-
 This enables seamless chaining between tools in an AI Agent workflow:
 - Download file from Telegram → Convert with Gotenberg → Send back to Telegram
 - Generate PDF from URL → Store reference in Mem0 → Send via Telegram
