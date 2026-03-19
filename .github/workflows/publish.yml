@@ -44,6 +44,7 @@ jobs:
           node --check dist/nodes/gotenberg/GotenbergAiTools.node.js
           node --check dist/nodes/telegram/TelegramBot.node.js
           node --check dist/nodes/telegram/TelegramBotAiTools.node.js
+          node --check dist/nodes/outline/Outline.node.js
           node --check dist/nodes/outline/OutlineAiTools.node.js
           echo "✅ All files pass syntax check"
 

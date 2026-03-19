@@ -41,14 +41,16 @@ jobs:
         run: |
           mkdir -p outline-package/dist/nodes/outline
           mkdir -p outline-package/dist/credentials
-          cp package/dist/nodes/outline/OutlineAiTools.node.js outline-package/dist/nodes/outline/OutlineAiTools.node.js
-          cp package/dist/nodes/outline/outline.svg            outline-package/dist/nodes/outline/outline.svg
+          cp package/dist/nodes/outline/Outline.node.js         outline-package/dist/nodes/outline/Outline.node.js
+          cp package/dist/nodes/outline/OutlineAiTools.node.js  outline-package/dist/nodes/outline/OutlineAiTools.node.js
+          cp package/dist/nodes/outline/outline.svg             outline-package/dist/nodes/outline/outline.svg
           cp package/dist/credentials/OutlineApi.credentials.js outline-package/dist/credentials/OutlineApi.credentials.js
 
       - name: Validate node syntax
         working-directory: .
         run: |
           node --check outline-package/dist/credentials/OutlineApi.credentials.js
+          node --check outline-package/dist/nodes/outline/Outline.node.js
           node --check outline-package/dist/nodes/outline/OutlineAiTools.node.js
           echo "✅ All files pass syntax check"
 

@@ -1,7 +1,7 @@
 # @unwarkz/n8n-nodes-outline-wiki
 
-N8N community node for **[Outline Wiki](https://www.getoutline.com/)** — a beautiful, feature-rich knowledge base.
-Exposes the full Outline REST API as an AI Agent tools node so your n8n AI agents can read, write, and manage your entire knowledge base.
+N8N community node package for **[Outline Wiki](https://www.getoutline.com/)** — a beautiful, feature-rich knowledge base.
+Provides two nodes: a full-featured **regular workflow node** for all Outline API operations, and an **AI Agent tools node** that exposes those same operations to LLM-powered agents.
 
 [![npm](https://img.shields.io/npm/v/@unwarkz/n8n-nodes-outline-wiki.svg)](https://www.npmjs.com/package/@unwarkz/n8n-nodes-outline-wiki)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -9,6 +9,26 @@ Exposes the full Outline REST API as an AI Agent tools node so your n8n AI agent
 ---
 
 ## Features
+
+### Outline Wiki Node (regular workflow node)
+
+Use in standard n8n workflows — drag, drop, configure, done. Full Resource → Operation picker covering the entire Outline REST API:
+
+| Resource | Operations |
+|----------|-----------|
+| **Document** | Get, Create, Update, Delete, List, Search, Search Titles, Import (file → document), Export (document → binary), Archive, Restore, Move, Answer Question (AI) |
+| **Collection** | List, Get, Create, Update, Delete, Get Document Tree, Export |
+| **Comment** | List, Create, Update, Delete |
+| **Attachment** | Upload (binary → Outline S3), Delete |
+| **User** | List, Get |
+| **Share** | List, Create, Revoke |
+
+**Highlights:**
+- **Import**: upload any binary (Markdown, HTML, DOCX, CSV, TSV) from the workflow binary data and import it as a new Outline document
+- **Export**: export a document as Markdown and place it in the output binary data for downstream processing
+- **Attachment Upload**: two-step signed upload (creates attachment record → POSTs file to signed S3/GCS URL) and returns the CDN URL for embedding in document content
+- `continueOnFail()` support — errors are captured per item instead of failing the whole workflow
+- Subtitle shows `Resource: Operation` for at-a-glance visibility in the canvas
 
 ### Outline Wiki AI Tools Node
 

@@ -28,6 +28,7 @@
       "dist/credentials/OutlineApi.credentials.js"
     ],
     "nodes": [
+      "dist/nodes/outline/Outline.node.js",
       "dist/nodes/outline/OutlineAiTools.node.js"
     ]
   },
