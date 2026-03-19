@@ -3,16 +3,16 @@
   "version": "1.0.4",
   "description": "N8N community node for Qdrant vector store — semantic search, embedding storage, and full collection management for AI Agent workflows",
   "license": "MIT",
-  "homepage": "https://github.com/unwarkz/n8n-nodes-mem0-api-server#readme",
+  "homepage": "https://github.com/unwarkz/n8n-nodes-assistant-set#readme",
   "author": {
     "name": "unwarkz <unwarkz@gmail.com>"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/unwarkz/n8n-nodes-mem0-api-server.git"
+    "url": "git+https://github.com/unwarkz/n8n-nodes-assistant-set.git"
   },
   "bugs": {
-    "url": "https://github.com/unwarkz/n8n-nodes-mem0-api-server/issues"
+    "url": "https://github.com/unwarkz/n8n-nodes-assistant-set/issues"
   },
   "main": "index.js",
   "scripts": {

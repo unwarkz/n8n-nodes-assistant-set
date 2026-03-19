@@ -1,5 +1,5 @@
 {
-  "name": "n8n-nodes-mem0-api-server",
+  "name": "n8n-nodes-assistant-set",
   "version": "1.0.0",
   "description": "Monorepo for **n8n community node packages** — AI-powered assistant tools for [n8n](https://n8n.io/) workflows and AI agents.",
   "main": "index.js",
@@ -10,16 +10,16 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/unwarkz/n8n-nodes-mem0-api-server.git"
+    "url": "git+https://github.com/unwarkz/n8n-nodes-assistant-set.git"
   },
   "keywords": [],
   "author": "",
   "license": "MIT",
   "type": "commonjs",
   "bugs": {
-    "url": "https://github.com/unwarkz/n8n-nodes-mem0-api-server/issues"
+    "url": "https://github.com/unwarkz/n8n-nodes-assistant-set/issues"
   },
-  "homepage": "https://github.com/unwarkz/n8n-nodes-mem0-api-server#readme",
+  "homepage": "https://github.com/unwarkz/n8n-nodes-assistant-set#readme",
   "devDependencies": {
     "jest": "^30.3.0"
   }
