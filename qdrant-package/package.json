@@ -1,7 +1,7 @@
 {
-  "name": "@unwarkz/n8n-nodes-gotenberg-pdf",
-  "version": "1.1.3",
-  "description": "N8N community node for Gotenberg - Docker-based PDF conversion API (Chromium, LibreOffice, PDF Engines)",
+  "name": "@unwarkz/n8n-nodes-qdrant",
+  "version": "1.0.1",
+  "description": "N8N community node for Qdrant vector store — semantic search, embedding storage, and full collection management for AI Agent workflows",
   "license": "MIT",
   "homepage": "https://github.com/unwarkz/n8n-nodes-mem0-api-server#readme",
   "author": {
@@ -25,25 +25,27 @@
   "n8n": {
     "n8nNodesApiVersion": 1,
     "credentials": [
-      "dist/credentials/GotenbergApi.credentials.js"
+      "dist/credentials/QdrantApi.credentials.js"
     ],
     "nodes": [
-      "dist/nodes/gotenberg/Gotenberg.node.js",
-      "dist/nodes/gotenberg/GotenbergAiTools.node.js"
+      "dist/nodes/qdrant/QdrantStoreAiTools.node.js",
+      "dist/nodes/qdrant/QdrantAiTools.node.js"
     ]
   },
   "keywords": [
     "n8n-community-node-package",
     "n8n",
-    "gotenberg",
-    "pdf",
-    "pdf-conversion",
-    "chromium",
-    "libreoffice",
-    "html-to-pdf",
-    "document-conversion",
+    "qdrant",
+    "vector-store",
+    "vector-database",
+    "embeddings",
+    "semantic-search",
+    "rag",
+    "retrieval-augmented-generation",
     "ai",
-    "llm"
+    "llm",
+    "knowledgebase",
+    "multimodal"
   ],
   "peerDependencies": {
     "n8n-workflow": ">=1.0.0"

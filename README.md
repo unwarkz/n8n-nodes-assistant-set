@@ -11,6 +11,7 @@ Monorepo for **n8n community node packages** — AI-powered assistant tools for 
 | **[@unwarkz/n8n-nodes-gotenberg-pdf](./gotenberg-package/)** | [![npm](https://img.shields.io/npm/v/@unwarkz/n8n-nodes-gotenberg-pdf.svg)](https://www.npmjs.com/package/@unwarkz/n8n-nodes-gotenberg-pdf) | Gotenberg PDF conversion |
 | **[@unwarkz/n8n-nodes-telegram-bot](./telegram-bot-package/)** | [![npm](https://img.shields.io/npm/v/@unwarkz/n8n-nodes-telegram-bot.svg)](https://www.npmjs.com/package/@unwarkz/n8n-nodes-telegram-bot) | Telegram Bot API (full coverage) |
 | **[@unwarkz/n8n-nodes-outline-wiki](./outline-package/)** | [![npm](https://img.shields.io/npm/v/@unwarkz/n8n-nodes-outline-wiki.svg)](https://www.npmjs.com/package/@unwarkz/n8n-nodes-outline-wiki) | Outline Wiki knowledge base (full API coverage) |
+| **[@unwarkz/n8n-nodes-qdrant](./qdrant-package/)** | [![npm](https://img.shields.io/npm/v/@unwarkz/n8n-nodes-qdrant.svg)](https://www.npmjs.com/package/@unwarkz/n8n-nodes-qdrant) | Qdrant vector store (store, search, manage collections) |
 
 ## Repository Structure
 
@@ -22,20 +23,24 @@ Monorepo for **n8n community node packages** — AI-powered assistant tools for 
 │           ├── Mem0/           # Mem0 memory nodes
 │           ├── gotenberg/      # Gotenberg PDF nodes
 │           ├── telegram/       # Telegram Bot nodes
-│           └── outline/        # Outline Wiki nodes
+│           ├── outline/        # Outline Wiki nodes
+│           └── qdrant/         # Qdrant vector store nodes
 ├── mem0-package/               # Standalone — @unwarkz/n8n-nodes-mem0
 ├── gotenberg-package/          # Standalone — @unwarkz/n8n-nodes-gotenberg-pdf
 ├── telegram-bot-package/       # Standalone — @unwarkz/n8n-nodes-telegram-bot
 ├── outline-package/            # Standalone — @unwarkz/n8n-nodes-outline-wiki
+├── qdrant-package/             # Standalone — @unwarkz/n8n-nodes-qdrant
 └── .github/workflows/
     ├── publish.yml               # Publish assistant-set
     ├── publish-mem0.yml          # Publish mem0
     ├── publish-gotenberg-pdf.yml # Publish gotenberg-pdf
     ├── publish-telegram-bot.yml  # Publish telegram-bot
-    └── publish-outline-wiki.yml  # Publish outline-wiki
+    ├── publish-outline-wiki.yml  # Publish outline-wiki
+    └── publish-qdrant.yml        # Publish qdrant
 ```
 
-All node source code lives in `package/dist/`. The standalone packages (`mem0-package/`, `gotenberg-package/`, `telegram-bot-package/`, `outline-package/`) have their dist files synced from `package/dist/` at publish time by GitHub Actions workflows.
+All node source code lives in `package/dist/`. The standalone packages have their dist files synced from `package/dist/` at publish time by GitHub Actions workflows.
+
 
 ## Included Nodes
 
@@ -60,6 +65,10 @@ All node source code lives in `package/dist/`. The standalone packages (`mem0-pa
   - **Attachments**: upload (binary → S3 signed URL → attachment URL), delete
   - **Users**: list, get
   - **Shares**: create, list, revoke
+  - 
+### Qdrant — Vector Store Knowledgebase
+- **Qdrant Store AI Tools** — embed text and binary files into Qdrant using a connected Embedding model sub-node; supports multimodal embedders with automatic base64 fallback
+- **Qdrant AI Tools** — full Qdrant operations: semantic search (with optional Reranker sub-node), scroll, get/upsert/delete points, count, recommend, collection management, snapshots
 
 ## Cross-Tool Interoperability
 
@@ -85,6 +94,7 @@ This enables seamless chaining between tools in an AI Agent workflow:
 - Generate PDF from URL → Store reference in Mem0 → Send via Telegram
 - Import Telegram attachment into Outline Wiki → Embed screenshots as Outline attachments
 - Export Outline document → Convert with Gotenberg → Send PDF via Telegram
+- Download image from Telegram → Embed with Qdrant Store AI Tools → Search similar images
 
 ## Installation
 
@@ -99,6 +109,7 @@ npm install @unwarkz/n8n-nodes-mem0
 npm install @unwarkz/n8n-nodes-gotenberg-pdf
 npm install @unwarkz/n8n-nodes-telegram-bot
 npm install @unwarkz/n8n-nodes-outline-wiki
+npm install @unwarkz/n8n-nodes-qdrant
 ```
 
 Or install via n8n **Settings > Community Nodes**.
@@ -112,6 +123,7 @@ Each package is published independently via manual GitHub Actions workflow dispa
 - **publish-gotenberg-pdf.yml** — publishes `@unwarkz/n8n-nodes-gotenberg-pdf` from `gotenberg-package/`
 - **publish-telegram-bot.yml** — publishes `@unwarkz/n8n-nodes-telegram-bot` from `telegram-bot-package/`
 - **publish-outline-wiki.yml** — publishes `@unwarkz/n8n-nodes-outline-wiki` from `outline-package/`
+- **publish-qdrant.yml** — publishes `@unwarkz/n8n-nodes-qdrant` from `qdrant-package/`
 
 ## License
 
