@@ -19,6 +19,8 @@ const ROOT = path.resolve(__dirname, '..');
 /*  Package definitions                                                */
 /* ------------------------------------------------------------------ */
 
+// All standalone packages (mem0-package, gotenberg-package, etc.) use package/dist
+// as their dist source of truth. Files are synced at publish time by GitHub Actions.
 const PACKAGES = [
   {
     name: '@unwarkz/n8n-nodes-assistant-set',
