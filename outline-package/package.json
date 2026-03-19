@@ -1,6 +1,6 @@
 {
   "name": "@unwarkz/n8n-nodes-outline-wiki",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "N8N community node for Outline Wiki - full Outline API coverage with AI Agent tools (documents, collections, comments, attachments, users, shares)",
   "license": "MIT",
   "homepage": "https://github.com/unwarkz/n8n-nodes-mem0-api-server#readme",
