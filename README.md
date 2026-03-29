@@ -4,6 +4,8 @@
 
 Monorepo for **n8n community node packages** — AI-powered assistant tools for [n8n](https://n8n.io/) workflows and AI agents.
 
+_**Please star the repo if you like it - i will know that it is needed to someone except me.**_
+
 ## Packages
 
 | Package | npm | Description |
