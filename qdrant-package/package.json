@@ -1,6 +1,6 @@
 {
   "name": "@unwarkz/n8n-nodes-qdrant",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "N8N community node for Qdrant vector store — semantic search, embedding storage, and full collection management for AI Agent workflows",
   "license": "MIT",
   "homepage": "https://github.com/unwarkz/n8n-nodes-assistant-set#readme",
