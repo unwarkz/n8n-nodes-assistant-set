@@ -2,6 +2,8 @@
 
 N8N community node for **Telegram Bot API** — full coverage of all Bot API methods with AI Agent tools integration.
 
+_**Please star the repo if you use my nodes - I will know that it is needed to someone except me.**_
+
 ## Features
 
 ### Telegram Bot Node

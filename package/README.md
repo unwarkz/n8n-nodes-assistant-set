@@ -5,6 +5,8 @@
 
 Full AI-assistant node set for [n8n](https://n8n.io/) — **Mem0** intelligent memory, **Gotenberg** PDF conversion, **Telegram Bot** messaging, **Outline Wiki** knowledge base, and **Qdrant** vector store. All nodes include both regular workflow variants and AI Agent tool variants.
 
+_**Please star the repo if you use my nodes - I will know that it is needed to someone except me.**_
+
 Each component is also available as a standalone package:
 - [@unwarkz/n8n-nodes-mem0](https://www.npmjs.com/package/@unwarkz/n8n-nodes-mem0)
 - [@unwarkz/n8n-nodes-gotenberg-pdf](https://www.npmjs.com/package/@unwarkz/n8n-nodes-gotenberg-pdf)

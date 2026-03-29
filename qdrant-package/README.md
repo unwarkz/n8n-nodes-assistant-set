@@ -2,6 +2,8 @@
 
 N8N community node for **[Qdrant](https://qdrant.tech/)** vector store — embed and store documents, perform semantic search, and manage collections from n8n AI Agent workflows.
 
+_**Please star the repo if you use my nodes - I will know that it is needed to someone except me.**_
+
 ## Features
 
 ### Qdrant Store AI Tools Node

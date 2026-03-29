@@ -6,6 +6,7 @@ Provides two nodes: a full-featured **regular workflow node** for all Outline AP
 [![npm](https://img.shields.io/npm/v/@unwarkz/n8n-nodes-outline-wiki.svg)](https://www.npmjs.com/package/@unwarkz/n8n-nodes-outline-wiki)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
+_**Please star the repo if you use my nodes - I will know that it is needed to someone except me.**_
 ---
 
 ## Features

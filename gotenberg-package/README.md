@@ -2,6 +2,8 @@
 
 An n8n community node package for [Gotenberg](https://gotenberg.dev/) — a Docker-based stateless API for PDF file management.
 
+_**Please star the repo if you use my nodes - I will know that it is needed to someone except me.**_
+
 ## Features
 
 ### Regular Node (Gotenberg)

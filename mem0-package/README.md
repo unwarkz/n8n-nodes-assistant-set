@@ -4,6 +4,8 @@
 
 N8N community node for [Mem0](https://mem0.ai/) — intelligent memory layer for AI applications.
 
+_**Please star the repo if you use my nodes - I will know that it is needed to someone except me.**_
+
 ## Features
 
 ### Mem0 (CRUD Node)
